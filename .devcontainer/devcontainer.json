@@ -1,6 +1,8 @@
 {
   "name": "secupython",
-  "image": "secupython-dev:latest",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "remoteUser": "dev",
   "updateRemoteUserUID": false,
   "runArgs": [

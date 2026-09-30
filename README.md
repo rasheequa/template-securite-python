@@ -27,3 +27,17 @@ Lancer le projet :
 ```bash
 poetry run tp1
 ```
+
+## Tests
+
+# Tous les tests du TP1
+poetry run pytest tests/tp1
+
+# Plus détaillé
+poetry run pytest tests/tp1 -v
+
+# Un seul fichier
+poetry run pytest tests/tp1/utils/test_capture.py -v
+
+# Un seul test précis
+poetry run pytest tests/tp1/utils/test_capture.py::test_get_all_protocols -v

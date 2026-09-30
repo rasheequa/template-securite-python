@@ -1,0 +1,65 @@
+{
+  "name": "secupython",
+  "image": "secupython-dev:latest",
+  "remoteUser": "dev",
+  "updateRemoteUserUID": false,
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--cap-add=NET_RAW",
+    "--cap-add=NET_ADMIN",
+    "--pids-limit=512",
+    "--memory=4g",
+    "--hostname=secupython"
+  ],
+  "containerEnv": {
+    "POETRY_REQUESTS_TIMEOUT": "120",
+    "POETRY_REQUESTS_MAX_RETRIES": "5",
+    "POETRY_INSTALLER_MAX_WORKERS": "2",
+    "PIP_DEFAULT_TIMEOUT": "120"
+  },
+  "remoteEnv": {
+    "PATH": "${containerWorkspaceFolder}/.venv/bin:${containerEnv:PATH}"
+  },
+  "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}; pre-commit install; timeout 1800 poetry install || echo '>>> Hors ligne : relance « poetry install » quand tu as du réseau'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "GitHub.copilot"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${containerWorkspaceFolder}/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.testing.pytestEnabled": true,
+        "ruff.lineLength": 110,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        },
+        "github.copilot.enable": {
+          "*": true,
+          "plaintext": false,
+          "markdown": false
+        },
+        "editor.inlineSuggest.enabled": true,
+        "github.copilot.nextEditSuggestions.enabled": false,
+        "chat.agent.enabled": false,
+        "chat.commandCenter.enabled": false,
+        "chat.mcp.enabled": false,
+        "inlineChat.enableV2": false,
+        "github.copilot.chat.enable": false,
+        "dev.containers.copyGitConfig": true,
+        "dev.containers.gitCredentialHelperConfigLocation": "none",
+        "remote.localPortHost": "localhost",
+        "security.workspace.trust.enabled": true
+      }
+    }
+  }
+}

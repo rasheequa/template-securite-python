@@ -6,6 +6,7 @@ class Capture:
     def __init__(self) -> None:
         self.interface = choose_interface()
         self.summary = ""
+        self.packets = []
 
     def capture_traffic(self) -> None:
         """

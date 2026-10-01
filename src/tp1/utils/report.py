@@ -12,7 +12,8 @@ class Report:
 
     def concat_report(self) -> str:
         """
-        Concat all data in report
+        Concatenate report content
+        :return:
         """
         content = ""
         content += self.title

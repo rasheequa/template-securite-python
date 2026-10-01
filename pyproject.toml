@@ -7,6 +7,7 @@ readme = "README.md"
 packages = [
   { include = "src" },
   { include = "tp1", from = "src" },
+  { include = "tp2", from = "src" },
   { include = "tp3", from = "src" },
 ]
 
@@ -16,9 +17,18 @@ requests = "^2.32.3"
 scapy = "^2.6.0"
 pygal = "^3.0.5"
 fpdf2 = "^2.8.1"
-pytest = "^8.3.5"
-capstone = "^5.0.6"
 python-dotenv = "^1.2.1"
+# Module 2 - triage de malware
+lief = "^0.17"
+yara-python = "^4.5.1"
+python-magic = "^0.4.27"
+# Module 3 - chaîne d'attaque (web + réseau)
+pytesseract = "^0.3.13"
+pillow = "^12.0"
+pwntools = "^4.13.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
 
 [build-system]
 requires = ["poetry-core"]
@@ -26,4 +36,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 tp1 = "tp1.main:main"
+tp2 = "tp2.main:main"
 tp3 = "tp3.main:main"

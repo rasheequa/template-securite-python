@@ -37,7 +37,7 @@ class Capture:
         de l'attaquant.
         c (FACULTATIF) Opérer le blocage de la machine
         attaquante.
-        Sinon a cher que tout va bien
+        Sinon afficher que tout va bien
         """
         all_protocols = self.get_all_protocols()
         sort = self.sort_network_protocols()

@@ -37,6 +37,7 @@
         "python.defaultInterpreterPath": "${containerWorkspaceFolder}/.venv/bin/python",
         "python.terminal.activateEnvironment": true,
         "python.testing.pytestEnabled": true,
+        "python.useEnvironmentsExtension": false,
         "ruff.lineLength": 110,
         "[python]": {
           "editor.defaultFormatter": "charliermarsh.ruff",

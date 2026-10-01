@@ -1,3 +1,5 @@
+# from scapy.all import *
+
 from tp1.utils.capture import Capture
 from tp1.utils.config import logger
 from tp1.utils.report import Report
@@ -5,6 +7,9 @@ from tp1.utils.report import Report
 
 def main():
     logger.info("Starting TP1")
+
+    # scapy_cap = rdpcap("file.pcap")
+    # print(scapy_cap.summary())
 
     capture = Capture()
     capture.capture_traffic()

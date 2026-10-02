@@ -1,7 +1,24 @@
+from dataclasses import dataclass
+
 from scapy.all import ARP, rdpcap
 
 from src.tp1.utils.lib import choose_interface
 from tp1.utils.config import logger
+
+
+class AttackType:
+    ARP_SPOOFING = "ARP Spoofing"
+    SQL_INJECTION = "SQL Injection"
+    PORT_SCAN = "Port Scan"
+
+
+@dataclass
+class Alert:
+    attack_type: AttackType
+    protocol: str
+    src_ip: str
+    src_mac: str
+    details: str
 
 
 class Capture:
@@ -9,7 +26,7 @@ class Capture:
         self.interface = choose_interface()
         self.summary = ""
         self.packets = []
-        self.alerts = []
+        self.alerts = list(Alert)
         self.summary = ""
 
     def capture_traffic(self) -> None:
@@ -78,13 +95,17 @@ class Capture:
         pkts = self.packets
         ip_mac_mapping = {}
         for pkt in pkts:
-            if pkt.haslayer(ARP):
-                arp = pkt.getlayer(ARP)
-                if arp.op == 2:  # ARP reply
-                    if arp.psrc in ip_mac_mapping and ip_mac_mapping[arp.psrc] != arp.hwsrc:
-                        self.alerts.append(f"ARP spoofing detected: {arp.psrc} is at {arp.hwsrc}")
-                    else:
-                        ip_mac_mapping[arp.psrc] = arp.hwsrc
+            if pkt.haslayer(ARP) and pkt[ARP].op == 2:
+                if pkt[ARP].psrc in ip_mac_mapping and ip_mac_mapping[pkt[ARP].psrc] != pkt[ARP].hwsrc:
+                    if (
+                        f"pkt[ARP] spoofing detected: IP src {pkt[ARP].psrc}; IP dst {pkt[ARP].pdst}; MAC src {pkt[ARP].hwsrc}; MAC dst {pkt[ARP].hwsrc} Previous saved MAC src: {ip_mac_mapping[pkt[ARP].psrc]}"
+                        not in self.alerts
+                    ):
+                        self.alerts.append(
+                            f"pkt[ARP] spoofing detected: IP src {pkt[ARP].psrc}; IP dst {pkt[ARP].pdst}; MAC src {pkt[ARP].hwsrc}; MAC dst {pkt[ARP].hwsrc} Previous saved MAC src: {ip_mac_mapping[pkt[ARP].psrc]}"
+                        )
+                else:
+                    ip_mac_mapping[pkt[ARP].psrc] = pkt[ARP].hwsrc
 
     def detect_sql_injection(self) -> None:
         """

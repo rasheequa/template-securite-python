@@ -82,7 +82,10 @@ class Capture:
         """
         Generate summary
         """
-        return self.alerts
+        if not self.alerts:
+            return "No alerts detected."
+        else:
+            return self.alerts
 
     def detect_arp_spoofing(self) -> None:
         """

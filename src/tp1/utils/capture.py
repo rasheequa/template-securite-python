@@ -76,16 +76,13 @@ class Capture:
         Return summary
         :return:
         """
-        print(self._gen_summary())
+        print(self.summary)
 
     def _gen_summary(self) -> str:
         """
         Generate summary
         """
-        for a in self.alerts:
-            self.summary += f"{a}\n"
-
-        return self.summary
+        return self.alerts
 
     def detect_arp_spoofing(self) -> None:
         """

@@ -117,3 +117,9 @@ class Capture:
         Detect SQL injection
         """
         logger.info("Detect SQL injection")
+
+    def detect_sport_scan(self) -> None:
+        """
+        Detect PORT scan
+        """
+        logger.info("Detect PORT scan")

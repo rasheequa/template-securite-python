@@ -26,7 +26,7 @@ class Capture:
         self.interface = choose_interface()
         self.summary = ""
         self.packets = []
-        self.alerts = list(Alert)
+        self.alerts: list[Alert] = []
         self.summary = ""
 
     def capture_traffic(self) -> None:
@@ -97,12 +97,17 @@ class Capture:
         for pkt in pkts:
             if pkt.haslayer(ARP) and pkt[ARP].op == 2:
                 if pkt[ARP].psrc in ip_mac_mapping and ip_mac_mapping[pkt[ARP].psrc] != pkt[ARP].hwsrc:
-                    if (
-                        f"pkt[ARP] spoofing detected: IP src {pkt[ARP].psrc}; IP dst {pkt[ARP].pdst}; MAC src {pkt[ARP].hwsrc}; MAC dst {pkt[ARP].hwsrc} Previous saved MAC src: {ip_mac_mapping[pkt[ARP].psrc]}"
-                        not in self.alerts
-                    ):
+                    if pkt[ARP].psrc not in [alert.src_ip for alert in self.alerts] and pkt[
+                        ARP
+                    ].hwsrc not in [alert.src_mac for alert in self.alerts]:
                         self.alerts.append(
-                            f"pkt[ARP] spoofing detected: IP src {pkt[ARP].psrc}; IP dst {pkt[ARP].pdst}; MAC src {pkt[ARP].hwsrc}; MAC dst {pkt[ARP].hwsrc} Previous saved MAC src: {ip_mac_mapping[pkt[ARP].psrc]}"
+                            Alert(
+                                attack_type=AttackType.ARP_SPOOFING,
+                                protocol="ARP",
+                                src_ip=pkt[ARP].psrc,
+                                src_mac=pkt[ARP].hwsrc,
+                                details=f"IP {pkt[ARP].psrc} is being spoofed by MAC {pkt[ARP].hwsrc}",
+                            )
                         )
                 else:
                     ip_mac_mapping[pkt[ARP].psrc] = pkt[ARP].hwsrc

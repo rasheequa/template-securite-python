@@ -97,9 +97,7 @@ class Capture:
         for pkt in pkts:
             if pkt.haslayer(ARP) and pkt[ARP].op == 2:
                 if pkt[ARP].psrc in ip_mac_mapping and ip_mac_mapping[pkt[ARP].psrc] != pkt[ARP].hwsrc:
-                    if pkt[ARP].psrc not in [alert.src_ip for alert in self.alerts] and pkt[
-                        ARP
-                    ].hwsrc not in [alert.src_mac for alert in self.alerts]:
+                    if (pkt[ARP].psrc, pkt[ARP].hwsrc) not in [(a.src_ip, a.src_mac) for a in self.alerts]:
                         self.alerts.append(
                             Alert(
                                 attack_type=AttackType.ARP_SPOOFING,

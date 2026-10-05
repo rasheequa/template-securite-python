@@ -19,7 +19,7 @@ def test_capture_init():
     capture = Capture()
 
     # Then
-    assert capture.interface == ""
+    assert capture.interface == "eth0"
     assert capture.summary == ""
 
 
@@ -32,7 +32,7 @@ def test_given_capture_when_capture_traffic_then_interface_is_set():
 
     # Then
     # This is a minimal test since the method doesn't do much yet
-    assert capture.interface == ""
+    assert capture.interface == "eth0"
 
 
 def test_sort_network_protocols():
@@ -86,7 +86,7 @@ def test_get_all_protocols():
             ],
         ),  # should return 1 alert
         (
-            [normal1, normal2, sameIPDiffMac, sameIPDiffMac, diffIPDiffMac],
+            [normal1, normal2, normal3, sameIPDiffMac, sameIPDiffMac, diffIPDiffMac],
             [
                 Alert(
                     attack_type="ARP Spoofing",

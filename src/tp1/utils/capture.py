@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from scapy.all import ARP, rdpcap
 
-from src.tp1.utils.lib import choose_interface
 from tp1.utils.config import logger
 
 
@@ -23,7 +22,8 @@ class Alert:
 
 class Capture:
     def __init__(self) -> None:
-        self.interface = choose_interface()
+        # self.interface = choose_interface()
+        self.interface = "eth0"
         self.summary = ""
         self.packets = []
         self.alerts: list[Alert] = []

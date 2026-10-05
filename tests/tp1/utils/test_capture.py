@@ -1,5 +1,13 @@
 from unittest.mock import patch
+
+import pytest
+from scapy.all import ARP, Ether
+
 from src.tp1.utils.capture import Capture
+
+normal1 = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="00:11:22:33:44:55")
+normal2 = Ether() / ARP(op=2, psrc="192.168.1.21", hwsrc="11:11:22:33:44:55")
+sameIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="22:11:22:33:44:55")
 
 
 def test_capture_init():
@@ -45,24 +53,23 @@ def test_get_all_protocols():
     assert result == ""  # Method currently returns None
 
 
-def test_analyse():
+@pytest.mark.parametrize(
+    "paquets, attendu",
+    [
+        ([normal1, normal2], 0),  # shoulkd return 0 alerts
+        ([normal1, sameIPDiffMac], 1),  # should return 1 alert
+        ([normal1, normal2, sameIPDiffMac, sameIPDiffMac], 1),  # should return 1 alert
+    ],
+    ids=["normal", "alert1", "alert2"],  # noms lisibles dans la sortie pytest
+)
+def test_analyse(paquets, attendu):
     # Given
     capture = Capture()
 
     # When
-    with (
-        patch.object(capture, "get_all_protocols") as mock_get_protocols,
-        patch.object(capture, "sort_network_protocols") as mock_sort,
-        patch.object(capture, "_gen_summary") as mock_gen_summary,
-    ):
-        mock_gen_summary.return_value = "Test summary"
-        capture.analyse("tcp")
-
-    # Then
-    mock_get_protocols.assert_called_once()
-    mock_sort.assert_called_once()
-    mock_gen_summary.assert_called_once()
-    assert capture.summary == "Test summary"
+    with patch("src.tp1.utils.capture.rdpcap", return_value=paquets):
+        capture.analyse("arp")
+    assert len(capture.alerts) == attendu
 
 
 def test_get_summary():

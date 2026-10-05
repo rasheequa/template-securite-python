@@ -5,27 +5,34 @@ from scapy.all import ARP, IP, TCP, Ether
 
 from src.tp1.utils.capture import Alert, Capture
 
+# initiate consts for tests
+TARGET_IP = "192.168.1.200"
+SCANNER_IP = "192.168.1.67"
+SCANNER_MAC = "22:11:22:33:44:55"
+CLIENT_IP = "192.168.1.20"
+CLIENT_MAC = "00:11:22:33:44:20"
+
 # packets for test arp
-arp_normal1 = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="00:11:22:33:44:55")
+arp_normal1 = Ether() / ARP(op=2, psrc=CLIENT_IP, hwsrc="00:11:22:33:44:55")
 arp_normal2 = Ether() / ARP(op=2, psrc="192.168.1.21", hwsrc="11:11:22:33:44:55")
 arp_normal3 = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc="aa:11:22:33:44:55")
-sameIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="22:11:22:33:44:55")
-diffIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc="22:11:22:33:44:55")
+sameIPDiffMac = Ether() / ARP(op=2, psrc=CLIENT_IP, hwsrc=SCANNER_MAC)
+diffIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc=SCANNER_MAC)
 
 # packets for test port scan
 
-tcp_normal1 = Ether() / IP(src="192.168.1.20", dst="192.168.1.200") / TCP(sport=4525, dport=80, flags="S")
-tcp_normal2 = Ether() / IP(src="192.168.1.20", dst="192.168.1.200") / TCP(sport=7824, dport=443)
-tcp_normal3 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=6742, dport=22)
-scan1 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3000, flags="S")
-scan2 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3001, flags="S")
-scan3 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3003, flags="S")
-scan4 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3004, flags="S")
-scan5 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3005, flags="S")
-scan6 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3006, flags="S")
-scan7 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3007, flags="S")
-scan8 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3008, flags="S")
-scan9 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3009, flags="S")
+tcp_normal1 = Ether() / IP(src=CLIENT_IP, dst=TARGET_IP) / TCP(sport=4525, dport=80, flags="S")
+tcp_normal2 = Ether() / IP(src=CLIENT_IP, dst=TARGET_IP) / TCP(sport=7824, dport=443)
+tcp_normal3 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=6742, dport=22)
+scan1 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3000, flags="S")
+scan2 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3001, flags="S")
+scan3 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3003, flags="S")
+scan4 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3004, flags="S")
+scan5 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3005, flags="S")
+scan6 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3006, flags="S")
+scan7 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3007, flags="S")
+scan8 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3008, flags="S")
+scan9 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3009, flags="S")
 
 alerts = list[Alert]
 
@@ -83,9 +90,9 @@ def test_get_all_protocols():
                 Alert(
                     attack_type="ARP Spoofing",
                     protocol="ARP",
-                    src_ip="192.168.1.20",
-                    src_mac="22:11:22:33:44:55",
-                    details="IP 192.168.1.20 is being spoofed by MAC 22:11:22:33:44:55",
+                    src_ip=CLIENT_IP,
+                    src_mac=SCANNER_MAC,
+                    details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
                 )
             ],
         ),  # should return 1 alert
@@ -95,9 +102,9 @@ def test_get_all_protocols():
                 Alert(
                     attack_type="ARP Spoofing",
                     protocol="ARP",
-                    src_ip="192.168.1.20",
-                    src_mac="22:11:22:33:44:55",
-                    details="IP 192.168.1.20 is being spoofed by MAC 22:11:22:33:44:55",
+                    src_ip=CLIENT_IP,
+                    src_mac=SCANNER_MAC,
+                    details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
                 )
             ],
         ),  # should return 1 alert ( test is same alert is not reported twice)
@@ -107,16 +114,16 @@ def test_get_all_protocols():
                 Alert(
                     attack_type="ARP Spoofing",
                     protocol="ARP",
-                    src_ip="192.168.1.20",
-                    src_mac="22:11:22:33:44:55",
-                    details="IP 192.168.1.20 is being spoofed by MAC 22:11:22:33:44:55",
+                    src_ip=CLIENT_IP,
+                    src_mac=SCANNER_MAC,
+                    details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
                 ),
                 Alert(
                     attack_type="ARP Spoofing",
                     protocol="ARP",
                     src_ip="192.168.1.1",
-                    src_mac="22:11:22:33:44:55",
-                    details="IP 192.168.1.1 is being spoofed by MAC 22:11:22:33:44:55",
+                    src_mac=SCANNER_MAC,
+                    details=f"IP 192.168.1.1 is being spoofed by MAC {SCANNER_MAC}",
                 ),
             ],
         ),  # should return 2 alerts

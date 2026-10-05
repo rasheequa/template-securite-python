@@ -10,8 +10,7 @@ TARGET_IP = "192.168.1.200"
 SCANNER_IP = "192.168.1.67"
 SCANNER_MAC = "22:11:22:33:44:55"
 CLIENT_IP = "192.168.1.20"
-CLIENT_MAC = "00:11:22:33:44:20"
-
+THRESHOLD = 10
 # packets for test arp
 arp_normal1 = Ether() / ARP(op=2, psrc=CLIENT_IP, hwsrc="00:11:22:33:44:55")
 arp_normal2 = Ether() / ARP(op=2, psrc="192.168.1.21", hwsrc="11:11:22:33:44:55")
@@ -24,16 +23,11 @@ diffIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc=SCANNER_MAC)
 tcp_normal1 = Ether() / IP(src=CLIENT_IP, dst=TARGET_IP) / TCP(sport=4525, dport=80, flags="S")
 tcp_normal2 = Ether() / IP(src=CLIENT_IP, dst=TARGET_IP) / TCP(sport=7824, dport=443)
 tcp_normal3 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=6742, dport=22)
-scan1 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3000, flags="S")
-scan2 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3001, flags="S")
-scan3 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3003, flags="S")
-scan4 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3004, flags="S")
-scan5 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3005, flags="S")
-scan6 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3006, flags="S")
-scan7 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3007, flags="S")
-scan8 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3008, flags="S")
-scan9 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3009, flags="S")
 
+tcp_scan = [
+    Ether(src=SCANNER_MAC) / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3000 + i, flags="S")
+    for i in range(THRESHOLD)
+]
 alerts = list[Alert]
 
 

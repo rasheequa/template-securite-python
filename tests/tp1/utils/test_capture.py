@@ -1,15 +1,31 @@
 from unittest.mock import patch
 
 import pytest
-from scapy.all import ARP, Ether
+from scapy.all import ARP, IP, TCP, Ether
 
 from src.tp1.utils.capture import Alert, Capture
 
-normal1 = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="00:11:22:33:44:55")
-normal2 = Ether() / ARP(op=2, psrc="192.168.1.21", hwsrc="11:11:22:33:44:55")
-normal3 = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc="aa:11:22:33:44:55")
+# packets for test arp
+arp_normal1 = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="00:11:22:33:44:55")
+arp_normal2 = Ether() / ARP(op=2, psrc="192.168.1.21", hwsrc="11:11:22:33:44:55")
+arp_normal3 = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc="aa:11:22:33:44:55")
 sameIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="22:11:22:33:44:55")
 diffIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc="22:11:22:33:44:55")
+
+# packets for test port scan
+
+tcp_normal1 = Ether() / IP(src="192.168.1.20", dst="192.168.1.200") / TCP(sport=4525, dport=80, flags="S")
+tcp_normal2 = Ether() / IP(src="192.168.1.20", dst="192.168.1.200") / TCP(sport=7824, dport=443)
+tcp_normal3 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=6742, dport=22)
+scan1 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3000, flags="S")
+scan2 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3001, flags="S")
+scan3 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3003, flags="S")
+scan4 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3004, flags="S")
+scan5 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3005, flags="S")
+scan6 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3006, flags="S")
+scan7 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3007, flags="S")
+scan8 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3008, flags="S")
+scan9 = Ether() / IP(src="192.168.1.67", dst="192.168.1.200") / TCP(sport=54148, dport=3009, flags="S")
 
 alerts = list[Alert]
 
@@ -60,9 +76,9 @@ def test_get_all_protocols():
 @pytest.mark.parametrize(
     "packets, theoricalAlerts",
     [
-        ([normal1, normal2], []),  # shoulkd return 0 alerts
+        ([arp_normal1, arp_normal2], []),  # shoulkd return 0 alerts
         (
-            [normal1, sameIPDiffMac],
+            [arp_normal1, sameIPDiffMac],
             [
                 Alert(
                     attack_type="ARP Spoofing",
@@ -74,7 +90,7 @@ def test_get_all_protocols():
             ],
         ),  # should return 1 alert
         (
-            [normal1, normal2, sameIPDiffMac, sameIPDiffMac],
+            [arp_normal1, arp_normal2, sameIPDiffMac, sameIPDiffMac],
             [
                 Alert(
                     attack_type="ARP Spoofing",
@@ -84,9 +100,9 @@ def test_get_all_protocols():
                     details="IP 192.168.1.20 is being spoofed by MAC 22:11:22:33:44:55",
                 )
             ],
-        ),  # should return 1 alert
+        ),  # should return 1 alert ( test is same alert is not reported twice)
         (
-            [normal1, normal2, normal3, sameIPDiffMac, sameIPDiffMac, diffIPDiffMac],
+            [arp_normal1, arp_normal2, arp_normal3, sameIPDiffMac, sameIPDiffMac, diffIPDiffMac],
             [
                 Alert(
                     attack_type="ARP Spoofing",
@@ -107,7 +123,7 @@ def test_get_all_protocols():
     ],
     ids=["normal", "alert1", "alert2", "alert3"],
 )
-def test_analyse(packets, theoricalAlerts):
+def test_detect_arp_spoofing(packets, theoricalAlerts):
     # Given
     capture = Capture()
 
@@ -115,7 +131,17 @@ def test_analyse(packets, theoricalAlerts):
     with patch("src.tp1.utils.capture.rdpcap", return_value=packets):
         capture.packets = packets
         capture.detect_arp_spoofing()
-        capture.detect_sport_scan()
+    assert capture.alerts == theoricalAlerts
+
+
+def test_detect_port_scan(packets, theoricalAlerts):
+    # Given
+    capture = Capture()
+
+    # When
+    with patch("src.tp1.utils.capture.rdpcap", return_value=packets):
+        capture.packets = packets
+        capture.detect_arp_spoofing()
     assert capture.alerts == theoricalAlerts
 
 

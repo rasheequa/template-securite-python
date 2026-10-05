@@ -66,6 +66,9 @@ class Capture:
         # logger.debug(f"Sorted protocols: {sort}")
 
         self.packets = rdpcap("file.pcap")
+        logger.info(f"Captured {len(self.packets)} packets")
+        logger.info(f"Captured packets: {self.packets.show()}")
+
         self.detect_arp_spoofing()
         self.detect_sql_injection()
 
@@ -116,7 +119,7 @@ class Capture:
         """
         logger.info("Detect SQL injection")
 
-    def detect_sport_scan(self) -> None:
+    def detect_port_scan(self) -> None:
         """
         Detect PORT scan
         """

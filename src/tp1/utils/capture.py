@@ -60,10 +60,10 @@ class Capture:
         attaquante.
         Sinon afficher que tout va bien
         """
-        all_protocols = self.get_all_protocols()
-        sort = self.sort_network_protocols()
-        logger.debug(f"All protocols: {all_protocols}")
-        logger.debug(f"Sorted protocols: {sort}")
+        # all_protocols = self.get_all_protocols()
+        # sort = self.sort_network_protocols()
+        # logger.debug(f"All protocols: {all_protocols}")
+        # logger.debug(f"Sorted protocols: {sort}")
 
         self.packets = rdpcap("file.pcap")
         self.detect_arp_spoofing()

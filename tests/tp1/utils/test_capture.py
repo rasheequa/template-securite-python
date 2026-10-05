@@ -7,7 +7,9 @@ from src.tp1.utils.capture import Alert, Capture
 
 normal1 = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="00:11:22:33:44:55")
 normal2 = Ether() / ARP(op=2, psrc="192.168.1.21", hwsrc="11:11:22:33:44:55")
+normal3 = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc="aa:11:22:33:44:55")
 sameIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.20", hwsrc="22:11:22:33:44:55")
+diffIPDiffMac = Ether() / ARP(op=2, psrc="192.168.1.1", hwsrc="22:11:22:33:44:55")
 
 alerts = list[Alert]
 
@@ -83,8 +85,27 @@ def test_get_all_protocols():
                 )
             ],
         ),  # should return 1 alert
+        (
+            [normal1, normal2, sameIPDiffMac, sameIPDiffMac, diffIPDiffMac],
+            [
+                Alert(
+                    attack_type="ARP Spoofing",
+                    protocol="ARP",
+                    src_ip="192.168.1.20",
+                    src_mac="22:11:22:33:44:55",
+                    details="IP 192.168.1.20 is being spoofed by MAC 22:11:22:33:44:55",
+                ),
+                Alert(
+                    attack_type="ARP Spoofing",
+                    protocol="ARP",
+                    src_ip="192.168.1.1",
+                    src_mac="22:11:22:33:44:55",
+                    details="IP 192.168.1.1 is being spoofed by MAC 22:11:22:33:44:55",
+                ),
+            ],
+        ),  # should return 2 alerts
     ],
-    ids=["normal", "alert1", "alert2"],
+    ids=["normal", "alert1", "alert2", "alert3"],
 )
 def test_analyse(packets, theoricalAlerts):
     # Given

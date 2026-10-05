@@ -54,22 +54,23 @@ def test_get_all_protocols():
 
 
 @pytest.mark.parametrize(
-    "paquets, attendu",
+    "packets, theoricalAlerts",
     [
         ([normal1, normal2], 0),  # shoulkd return 0 alerts
         ([normal1, sameIPDiffMac], 1),  # should return 1 alert
         ([normal1, normal2, sameIPDiffMac, sameIPDiffMac], 1),  # should return 1 alert
     ],
-    ids=["normal", "alert1", "alert2"],  # noms lisibles dans la sortie pytest
+    ids=["normal", "alert1", "alert2"],
 )
-def test_analyse(paquets, attendu):
+def test_analyse(packets, theoricalAlerts):
     # Given
     capture = Capture()
 
     # When
-    with patch("src.tp1.utils.capture.rdpcap", return_value=paquets):
-        capture.analyse("arp")
-    assert len(capture.alerts) == attendu
+    with patch("src.tp1.utils.capture.rdpcap", return_value=packets):
+        capture.packets = packets
+        capture.detect_arp_spoofing()
+    assert len(capture.alerts) == theoricalAlerts
 
 
 def test_get_summary():

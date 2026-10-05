@@ -24,11 +24,15 @@ tcp_normal1 = Ether() / IP(src=CLIENT_IP, dst=TARGET_IP) / TCP(sport=4525, dport
 tcp_normal2 = Ether() / IP(src=CLIENT_IP, dst=TARGET_IP) / TCP(sport=7824, dport=443)
 tcp_normal3 = Ether() / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=6742, dport=22)
 
-tcp_scan = [
+tcp_scan_thresh = [
     Ether(src=SCANNER_MAC) / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3000 + i, flags="S")
     for i in range(THRESHOLD)
 ]
-alerts = list[Alert]
+
+tcp_scan_below_thresh = [
+    Ether(src=SCANNER_MAC) / IP(src=SCANNER_IP, dst=TARGET_IP) / TCP(sport=54148, dport=3000 + i, flags="S")
+    for i in range(THRESHOLD - 1)
+]
 
 
 def test_capture_init():

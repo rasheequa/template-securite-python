@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 from scapy.all import ARP, IP, TCP, Ether
 
-from src.tp1.utils.capture import Alert, Capture
+from src.tp1.utils.capture import Alert, AttackType, Capture
 
 # initiate consts for tests
 TARGET_IP = "192.168.1.200"
@@ -81,12 +81,12 @@ def test_get_all_protocols():
 @pytest.mark.parametrize(
     "packets, theoricalAlerts",
     [
-        ([arp_normal1, arp_normal2], []),  # shoulkd return 0 alerts
+        ([arp_normal1, arp_normal2], []),  # should return 0 alerts
         (
             [arp_normal1, sameIPDiffMac],
             [
                 Alert(
-                    attack_type="ARP Spoofing",
+                    attack_type=AttackType.ARP_SPOOFING,
                     protocol="ARP",
                     src_ip=CLIENT_IP,
                     src_mac=SCANNER_MAC,
@@ -98,7 +98,7 @@ def test_get_all_protocols():
             [arp_normal1, arp_normal2, sameIPDiffMac, sameIPDiffMac],
             [
                 Alert(
-                    attack_type="ARP Spoofing",
+                    attack_type=AttackType.ARP_SPOOFING,
                     protocol="ARP",
                     src_ip=CLIENT_IP,
                     src_mac=SCANNER_MAC,
@@ -110,14 +110,14 @@ def test_get_all_protocols():
             [arp_normal1, arp_normal2, arp_normal3, sameIPDiffMac, sameIPDiffMac, diffIPDiffMac],
             [
                 Alert(
-                    attack_type="ARP Spoofing",
+                    attack_type=AttackType.ARP_SPOOFING,
                     protocol="ARP",
                     src_ip=CLIENT_IP,
                     src_mac=SCANNER_MAC,
                     details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
                 ),
                 Alert(
-                    attack_type="ARP Spoofing",
+                    attack_type=AttackType.ARP_SPOOFING,
                     protocol="ARP",
                     src_ip="192.168.1.1",
                     src_mac=SCANNER_MAC,
@@ -126,7 +126,7 @@ def test_get_all_protocols():
             ],
         ),  # should return 2 alerts
     ],
-    ids=["normal", "alert1", "alert2", "alert3"],
+    ids=["arp_normal", "arp_alert1", "arp_alert2", "arp_alert3"],
 )
 def test_detect_arp_spoofing(packets, theoricalAlerts):
     # Given
@@ -139,6 +139,38 @@ def test_detect_arp_spoofing(packets, theoricalAlerts):
     assert capture.alerts == theoricalAlerts
 
 
+@pytest.mark.parametrize(
+    "packets, theoricalAlerts",
+    [
+        ([tcp_normal1, tcp_normal2], []),  # should return 0 alerts
+        ([tcp_normal1, tcp_scan_below_thresh], []),  # should return 0 alert
+        (
+            [tcp_normal1, tcp_normal2, tcp_scan_below_thresh, tcp_scan_thresh],
+            [
+                Alert(
+                    attack_type=AttackType.PORT_SCAN,
+                    protocol="ARP",
+                    src_ip=CLIENT_IP,
+                    src_mac=SCANNER_MAC,
+                    details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
+                )
+            ],
+        ),  # should return 1 alert
+        (
+            [tcp_normal1, tcp_normal2, tcp_scan_below_thresh, tcp_scan_thresh, tcp_scan_thresh],
+            [
+                Alert(
+                    attack_type=AttackType.PORT_SCAN,
+                    protocol="ARP",
+                    src_ip=CLIENT_IP,
+                    src_mac=SCANNER_MAC,
+                    details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
+                ),
+            ],
+        ),  # should return 1 alert ( test is same alert is not reported twice )
+    ],
+    ids=["tcp_normal", "tcp_bellow_thresh", "tcp_alert1", "tcp_alert2"],
+)
 def test_detect_port_scan(packets, theoricalAlerts):
     # Given
     capture = Capture()
@@ -146,7 +178,7 @@ def test_detect_port_scan(packets, theoricalAlerts):
     # When
     with patch("src.tp1.utils.capture.rdpcap", return_value=packets):
         capture.packets = packets
-        capture.detect_arp_spoofing()
+        capture.detect_port_scan()
     assert capture.alerts == theoricalAlerts
 
 

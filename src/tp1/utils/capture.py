@@ -1,12 +1,35 @@
-from src.tp1.utils.lib import choose_interface
+from dataclasses import dataclass
+
+from scapy.all import ARP, IP, TCP, rdpcap
+
 from tp1.utils.config import logger
+
+THRESHOLD = 10
+
+
+class AttackType:
+    ARP_SPOOFING = "ARP Spoofing"
+    SQL_INJECTION = "SQL Injection"
+    PORT_SCAN = "Port Scan"
+
+
+@dataclass
+class Alert:
+    attack_type: AttackType
+    protocol: str
+    src_ip: str
+    src_mac: str
+    details: str
 
 
 class Capture:
     def __init__(self) -> None:
-        self.interface = choose_interface()
+        # self.interface = choose_interface()
+        self.interface = "eth0"
         self.summary = ""
         self.packets = []
+        self.alerts: list[Alert] = []
+        self.summary = ""
 
     def capture_traffic(self) -> None:
         """
@@ -39,10 +62,19 @@ class Capture:
         attaquante.
         Sinon afficher que tout va bien
         """
-        all_protocols = self.get_all_protocols()
-        sort = self.sort_network_protocols()
-        logger.debug(f"All protocols: {all_protocols}")
-        logger.debug(f"Sorted protocols: {sort}")
+        # all_protocols = self.get_all_protocols()
+        # sort = self.sort_network_protocols()
+        # logger.debug(f"All protocols: {all_protocols}")
+        # logger.debug(f"Sorted protocols: {sort}")
+
+        self.packets = rdpcap("file.pcap")
+        logger.info(f"Captured {len(self.packets)} packets")
+        logger.info(f"Captured packets: {self.packets.show()}")
+
+        self.detect_arp_spoofing()
+        self.detect_sql_injection()
+        self.detect_port_scan()
+        self.find_flag()
 
         self.summary = self._gen_summary()
 
@@ -51,11 +83,91 @@ class Capture:
         Return summary
         :return:
         """
-        return self.summary
+        logger.info(self.summary)
 
     def _gen_summary(self) -> str:
         """
         Generate summary
         """
-        summary = ""
-        return summary
+        if not self.alerts:
+            return "No alerts detected."
+        else:
+            return self.alerts
+
+    def detect_arp_spoofing(self) -> None:
+        """
+        Detect ARP spoofing
+        """
+        logger.info("Detect ARP spoofing")
+        pkts = self.packets
+        ip_mac_mapping = {}
+        for pkt in pkts:
+            if not (pkt.haslayer(ARP) and pkt[ARP].op == 2):
+                continue
+
+            ip = pkt[ARP].psrc
+            mac = pkt[ARP].hwsrc
+            if not (ip in ip_mac_mapping and ip_mac_mapping[ip] != mac):
+                ip_mac_mapping[ip] = mac
+                continue
+
+            if (ip, mac) not in [(a.src_ip, a.src_mac) for a in self.alerts]:
+                self.alerts.append(
+                    Alert(
+                        attack_type=AttackType.ARP_SPOOFING,
+                        protocol="ARP",
+                        src_ip=ip,
+                        src_mac=mac,
+                        details=f"IP {pkt[ARP].psrc} is being spoofed by MAC {mac}",
+                    )
+                )
+
+    def detect_sql_injection(self) -> None:
+        """
+        Detect SQL injection
+        """
+        logger.info("Detect SQL injection")
+
+    def detect_port_scan(self) -> None:
+        """
+        Detect PORT scan
+        """
+        logger.info("Detect PORT scan")
+
+        pkts = self.packets
+        ip_src_dst_port_couple = {}
+        for pkt in pkts:
+            if not (pkt.haslayer(TCP) and pkt[TCP].flags == "S"):
+                continue
+
+            pair = (pkt[IP].src, pkt[IP].dst)
+
+            if pair not in ip_src_dst_port_couple:
+                ip_src_dst_port_couple[pair] = []
+
+            if pkt[TCP].dport not in ip_src_dst_port_couple[pair]:
+                ip_src_dst_port_couple[pair].append(pkt[TCP].dport)
+
+                if len(ip_src_dst_port_couple[pair]) == THRESHOLD:
+                    self.alerts.append(
+                        Alert(
+                            attack_type=AttackType.PORT_SCAN,
+                            protocol="TCP",
+                            src_ip=pkt[IP].src,
+                            src_mac="",
+                            details=f"IP {pkt[IP].src} is scanning ports on IP {pkt[IP].dst}",
+                        )
+                    )
+
+    def find_flag(self) -> None:
+        """
+        Find flag in captured packets
+        """
+        logger.info("Finding for flag....")
+        pkts = self.packets
+
+        for pkt in pkts:
+            if pkt.haslayer(TCP) and pkt[TCP].payload and b"GET /login" in bytes(pkt[TCP].payload):
+                continue  # need to import regex instead of just 'get /login' and parse this packet b"GET /login.php?user=admin%27%20OR%201=1--%20&token=ESGI{tp1_47e333cd2508} HTTP/1.1\r\nHost: intranet\r\nUser-Agent: sqlmap/1.7\r\nX-Note: injection ' OR 1=1\r\n\r\n" like an idiot
+                # regex on ESGI{tp1_47e333cd2508} to find the flag
+                # wwill the flag be in other packet than raw ? dont think so but gonna test it

@@ -203,3 +203,8 @@ def test_gen_summary():
 
     # Then
     assert result == ""  # Method currently returns empty string
+
+
+def test_find_flag():
+    # fun to test find flag
+    assert True  # placeholder

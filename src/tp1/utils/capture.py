@@ -74,6 +74,7 @@ class Capture:
         self.detect_arp_spoofing()
         self.detect_sql_injection()
         self.detect_port_scan()
+        self.find_flag()
 
         self.summary = self._gen_summary()
 
@@ -82,7 +83,7 @@ class Capture:
         Return summary
         :return:
         """
-        print(self.summary)
+        logger.info(self.summary)
 
     def _gen_summary(self) -> str:
         """
@@ -157,3 +158,16 @@ class Capture:
                             details=f"IP {pkt[IP].src} is scanning ports on IP {pkt[IP].dst}",
                         )
                     )
+
+    def find_flag(self) -> None:
+        """
+        Find flag in captured packets
+        """
+        logger.info("Finding for flag....")
+        pkts = self.packets
+
+        for pkt in pkts:
+            if pkt.haslayer(TCP) and pkt[TCP].payload and b"GET /login" in bytes(pkt[TCP].payload):
+                continue  # need to import regex instead of just 'get /login' and parse this packet b"GET /login.php?user=admin%27%20OR%201=1--%20&token=ESGI{tp1_47e333cd2508} HTTP/1.1\r\nHost: intranet\r\nUser-Agent: sqlmap/1.7\r\nX-Note: injection ' OR 1=1\r\n\r\n" like an idiot
+                # regex on ESGI{tp1_47e333cd2508} to find the flag
+                # wwill the flag be in other packet than raw ? dont think so but gonna test it

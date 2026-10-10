@@ -104,18 +104,20 @@ class Capture:
             if not (pkt.haslayer(ARP) and pkt[ARP].op == 2):
                 continue
 
-            if not (pkt[ARP].psrc in ip_mac_mapping and ip_mac_mapping[pkt[ARP].psrc] != pkt[ARP].hwsrc):
-                ip_mac_mapping[pkt[ARP].psrc] = pkt[ARP].hwsrc
+            ip = pkt[ARP].psrc
+            mac = pkt[ARP].hwsrc
+            if not (ip in ip_mac_mapping and ip_mac_mapping[ip] != mac):
+                ip_mac_mapping[ip] = mac
                 continue
 
-            if (pkt[ARP].psrc, pkt[ARP].hwsrc) not in [(a.src_ip, a.src_mac) for a in self.alerts]:
+            if (ip, mac) not in [(a.src_ip, a.src_mac) for a in self.alerts]:
                 self.alerts.append(
                     Alert(
                         attack_type=AttackType.ARP_SPOOFING,
                         protocol="ARP",
-                        src_ip=pkt[ARP].psrc,
-                        src_mac=pkt[ARP].hwsrc,
-                        details=f"IP {pkt[ARP].psrc} is being spoofed by MAC {pkt[ARP].hwsrc}",
+                        src_ip=ip,
+                        src_mac=mac,
+                        details=f"IP {pkt[ARP].psrc} is being spoofed by MAC {mac}",
                     )
                 )
 

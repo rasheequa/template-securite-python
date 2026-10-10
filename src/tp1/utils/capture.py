@@ -73,6 +73,7 @@ class Capture:
 
         self.detect_arp_spoofing()
         self.detect_sql_injection()
+        self.detect_port_scan()
 
         self.summary = self._gen_summary()
 
@@ -130,18 +131,16 @@ class Capture:
         pkts = self.packets
         ip_src_dst_port_couple = {}
         for pkt in pkts:
-            if (
-                pkt.haslayer(TCP)
-                and pkt[TCP].flags == "S"
-                and (pkt[IP].src, pkt[IP].dst) not in ip_src_dst_port_couple
-            ):
+            if not (pkt.haslayer(TCP) and pkt[TCP].flags == "S"):
+                continue
+
+            if (pkt[IP].src, pkt[IP].dst) not in ip_src_dst_port_couple:
                 ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)] = []
-            elif pkt[TCP].dport not in ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]:
+
+            if pkt[TCP].dport not in ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]:
                 ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)].append(pkt[TCP].dport)
-                if len(ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]) > THRESHOLD and (
-                    pkt[IP].src,
-                    pkt[IP].dst,
-                ) not in [(a.src_ip, a.src_mac) for a in self.alerts]:
+
+                if len(ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]) > THRESHOLD:
                     self.alerts.append(
                         Alert(
                             attack_type=AttackType.PORT_SCAN,

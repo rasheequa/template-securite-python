@@ -140,7 +140,7 @@ class Capture:
             if pkt[TCP].dport not in ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]:
                 ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)].append(pkt[TCP].dport)
 
-                if len(ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]) > THRESHOLD:
+                if len(ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]) == THRESHOLD:
                     self.alerts.append(
                         Alert(
                             attack_type=AttackType.PORT_SCAN,

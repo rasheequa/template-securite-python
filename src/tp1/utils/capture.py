@@ -134,13 +134,15 @@ class Capture:
             if not (pkt.haslayer(TCP) and pkt[TCP].flags == "S"):
                 continue
 
-            if (pkt[IP].src, pkt[IP].dst) not in ip_src_dst_port_couple:
-                ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)] = []
+            pair = (pkt[IP].src, pkt[IP].dst)
 
-            if pkt[TCP].dport not in ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]:
-                ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)].append(pkt[TCP].dport)
+            if pair not in ip_src_dst_port_couple:
+                ip_src_dst_port_couple[pair] = []
 
-                if len(ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]) == THRESHOLD:
+            if pkt[TCP].dport not in ip_src_dst_port_couple[pair]:
+                ip_src_dst_port_couple[pair].append(pkt[TCP].dport)
+
+                if len(ip_src_dst_port_couple[pair]) == THRESHOLD:
                     self.alerts.append(
                         Alert(
                             attack_type=AttackType.PORT_SCAN,

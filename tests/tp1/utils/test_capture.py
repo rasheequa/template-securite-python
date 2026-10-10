@@ -143,9 +143,9 @@ def test_detect_arp_spoofing(packets, theoricalAlerts):
     "packets, theoricalAlerts",
     [
         ([tcp_normal1, tcp_normal2], []),  # should return 0 alerts
-        ([tcp_normal1, tcp_scan_below_thresh], []),  # should return 0 alert
+        ([tcp_normal1, *tcp_scan_below_thresh], []),  # should return 0 alert
         (
-            [tcp_normal1, tcp_normal2, tcp_scan_below_thresh, tcp_scan_thresh],
+            [tcp_normal1, tcp_normal2, *tcp_scan_below_thresh, *tcp_scan_thresh],
             [
                 Alert(
                     attack_type=AttackType.PORT_SCAN,

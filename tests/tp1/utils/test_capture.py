@@ -3,14 +3,14 @@ from unittest.mock import patch
 import pytest
 from scapy.all import ARP, IP, TCP, Ether
 
-from src.tp1.utils.capture import Alert, AttackType, Capture
+from src.tp1.utils.capture import THRESHOLD, Alert, AttackType, Capture
 
 # initiate consts for tests
 TARGET_IP = "192.168.1.200"
 SCANNER_IP = "192.168.1.67"
 SCANNER_MAC = "22:11:22:33:44:55"
 CLIENT_IP = "192.168.1.20"
-THRESHOLD = 10
+
 # packets for test arp
 arp_normal1 = Ether() / ARP(op=2, psrc=CLIENT_IP, hwsrc="00:11:22:33:44:55")
 arp_normal2 = Ether() / ARP(op=2, psrc="192.168.1.21", hwsrc="11:11:22:33:44:55")
@@ -149,10 +149,10 @@ def test_detect_arp_spoofing(packets, theoricalAlerts):
             [
                 Alert(
                     attack_type=AttackType.PORT_SCAN,
-                    protocol="ARP",
-                    src_ip=CLIENT_IP,
-                    src_mac=SCANNER_MAC,
-                    details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
+                    protocol="TCP",
+                    src_ip=SCANNER_IP,
+                    src_mac="",
+                    details=f"IP {SCANNER_IP} is scanning ports on IP {TARGET_IP}",
                 )
             ],
         ),  # should return 1 alert
@@ -161,10 +161,10 @@ def test_detect_arp_spoofing(packets, theoricalAlerts):
             [
                 Alert(
                     attack_type=AttackType.PORT_SCAN,
-                    protocol="ARP",
-                    src_ip=CLIENT_IP,
-                    src_mac=SCANNER_MAC,
-                    details=f"IP {CLIENT_IP} is being spoofed by MAC {SCANNER_MAC}",
+                    protocol="TCP",
+                    src_ip=SCANNER_IP,
+                    src_mac="",
+                    details=f"IP {SCANNER_IP} is scanning ports on IP {TARGET_IP}",
                 ),
             ],
         ),  # should return 1 alert ( test is same alert is not reported twice )

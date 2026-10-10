@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
-from scapy.all import ARP, rdpcap
+from scapy.all import ARP, IP, TCP, rdpcap
 
 from tp1.utils.config import logger
+
+THRESHOLD = 10
 
 
 class AttackType:
@@ -124,3 +126,28 @@ class Capture:
         Detect PORT scan
         """
         logger.info("Detect PORT scan")
+
+        pkts = self.packets
+        ip_src_dst_port_couple = {}
+        for pkt in pkts:
+            if (
+                pkt.haslayer(TCP)
+                and pkt[TCP].flags == "S"
+                and (pkt[IP].src, pkt[IP].dst) not in ip_src_dst_port_couple
+            ):
+                ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)] = []
+            elif pkt[TCP].dport not in ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]:
+                ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)].append(pkt[TCP].dport)
+                if len(ip_src_dst_port_couple[(pkt[IP].src, pkt[IP].dst)]) > THRESHOLD and (
+                    pkt[IP].src,
+                    pkt[IP].dst,
+                ) not in [(a.src_ip, a.src_mac) for a in self.alerts]:
+                    self.alerts.append(
+                        Alert(
+                            attack_type=AttackType.PORT_SCAN,
+                            protocol="TCP",
+                            src_ip=pkt[IP].src,
+                            src_mac="",
+                            details=f"IP {pkt[IP].src} is scanning ports on IP {pkt[IP].dst}",
+                        )
+                    )

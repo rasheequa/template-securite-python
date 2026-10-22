@@ -3,7 +3,10 @@ import math
 import re
 from collections import Counter
 
+import lief
 import magic
+
+from tp2.utils.config import logger
 
 
 class Sample:
@@ -53,4 +56,28 @@ class Sample:
 
     def parse_binary(self) -> dict:
         """imports / sections via lief (si PE/ELF)."""
-        raise NotImplementedError
+
+        binary = lief.parse(self.path)
+
+        resulats = {"imports": [], "sections": [], "exports": [], "overlay": 0}
+
+        if binary is None:
+            logger.info("parse binary has returned None")
+            return resulats
+
+        for imp in binary.imported_functions:
+            resulats["imports"].append(imp.name)
+
+        for sec in binary.sections:
+            resulats["sections"].append(
+                {"name": sec.name, "size": sec.size, "entropy": round(sec.entropy, 2)}
+            )
+
+        for exp in binary.exported_functions:
+            resulats["exports"].append(exp.name)
+
+        if binary.has_overlay:
+            resulats["overlay"] = len(binary.overlay)
+
+        return resulats
+        # raise NotImplementedError

@@ -25,7 +25,6 @@ class Sample:
         }
 
         return metadata
-        # raise NotImplementedError
 
     def shannon_entropy(self) -> float:
         if not self.data:
@@ -52,32 +51,56 @@ class Sample:
 
         return resultat
 
-        # raise NotImplementedError
-
     def parse_binary(self) -> dict:
         """imports / sections via lief (si PE/ELF)."""
 
         binary = lief.parse(self.path)
 
-        resulats = {"imports": [], "sections": [], "exports": [], "overlay": 0}
+        resultats = {"imports": [], "sections": [], "exports": [], "overlay": 0}
 
         if binary is None:
             logger.info("parse binary has returned None")
-            return resulats
+            return resultats
 
         for imp in binary.imported_functions:
-            resulats["imports"].append(imp.name)
+            resultats["imports"].append(imp.name)
 
         for sec in binary.sections:
-            resulats["sections"].append(
+            resultats["sections"].append(
                 {"name": sec.name, "size": sec.size, "entropy": round(sec.entropy, 2)}
             )
 
         for exp in binary.exported_functions:
-            resulats["exports"].append(exp.name)
+            resultats["exports"].append(exp.name)
 
         if binary.has_overlay:
-            resulats["overlay"] = len(binary.overlay)
+            resultats["overlay"] = len(binary.overlay)
 
-        return resulats
-        # raise NotImplementedError
+            bytes_overlay = bytes(binary.overlay).split(b"\x00")
+
+            pieces = []
+            for b in bytes_overlay:
+                pieces.append(b.decode("latin-1"))
+
+            if pieces:
+                pieces[0] = pieces[0].split("--- overlay ---")[-1].strip()
+
+            regex = re.compile(
+                r"(?:\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b)|(?:\b(?:\d{1,3}\.){3}\d{1,3}\b)|(?:https?://)",
+                re.IGNORECASE,
+            )
+
+            for piece in pieces:
+                if not piece:
+                    continue
+
+                if piece.endswith((".dll", ".exe")):
+                    continue
+
+                if re.search(regex, piece):
+                    break
+
+                if piece not in resultats["imports"]:
+                    resultats["imports"].append(piece)
+
+        return resultats

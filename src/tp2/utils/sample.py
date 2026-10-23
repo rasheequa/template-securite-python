@@ -12,7 +12,8 @@ from tp2.utils.config import logger
 class Sample:
     def __init__(self, path: str) -> None:
         self.path = path
-        self.data = open(path, "rb").read()
+        with open(path, "rb") as f:
+            self.data = f.read()
 
     def get_file_metadata(self) -> dict:
         """sha256, md5, taille, type de fichier, entropie de Shannon."""

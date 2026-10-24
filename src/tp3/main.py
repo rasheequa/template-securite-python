@@ -10,6 +10,7 @@ import argparse
 import re
 from io import BytesIO
 
+import pytesseract
 import requests
 from PIL import Image
 
@@ -30,6 +31,10 @@ def breach_web(session: requests.Session, target: str) -> tuple[str, int, bytes]
     req_img = session.get(f"{target}{img}").content
     img = Image.open(BytesIO(req_img)).convert("L")
     img.save("captcha.png")
+
+    guess = pytesseract.image_to_string(img).strip()
+
+    print(f"guess: {guess}")
 
 
 def breach_network(host: str, port: int, key: bytes) -> str:

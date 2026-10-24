@@ -16,19 +16,20 @@ from PIL import Image
 from tp3.utils.config import logger
 
 
-def breach_web(target: str) -> tuple[str, int, bytes]:
+def breach_web(session: requests.Session, target: str) -> tuple[str, int, bytes]:
     """Fuzz les endpoints, casse le CAPTCHA, retourne (host, port, key).
 
     Affiche aussi Flag 1. Indices : requests, PIL, pytesseract.
     """
-    req = requests.get(f"{target}/internal-panel")
+    req = session.get(f"{target}/internal-panel")
 
     print(req.text)
 
     img = re.search(r'<img src="([^"]*)"', req.text).group(1)
     print(f"img: {img}")
-    req_img = requests.get(f"{target}{img}").content
-    Image.open(BytesIO(req_img)).convert("L").save("captcha.png")
+    req_img = session.get(f"{target}{img}").content
+    img = Image.open(BytesIO(req_img)).convert("L")
+    img.save("captcha.png")
 
 
 def breach_network(host: str, port: int, key: bytes) -> str:
@@ -45,7 +46,8 @@ def main() -> None:
     args = ap.parse_args()
 
     logger.info("Starting TP3 - breach the target")
-    host, port, key = breach_web(args.target)
+    session = requests.Session()
+    host, port, key = breach_web(session, args.target)
     flag = breach_network(host, port, key)
     logger.info(f"FLAG_FINAL: {flag}")
 

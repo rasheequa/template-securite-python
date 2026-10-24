@@ -50,7 +50,7 @@ class Session:
         self.host = data.get("host", "")
         self.port = data.get("port", 0)
         self.key = data.get("key", "").encode()
-        print(self.flag_value, self.host, self.port, self.key)
+        return self.flag_value, self.host, self.port, self.key
 
     def submit_request(self):
         """

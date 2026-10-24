@@ -17,7 +17,9 @@ def breach_web(session: Session) -> tuple[str, int, bytes]:
 
     Affiche aussi Flag 1. Indices : requests, PIL, pytesseract.
     """
-    session.prepare_request()
+    flag1, host, port, key = session.prepare_request()
+    logger.info(f"FLAG_1: {flag1}")
+    return host, port, key
 
 
 def breach_network(host: str, port: int, key: bytes) -> str:

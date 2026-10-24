@@ -26,6 +26,9 @@ class Session:
         self.flag_value = ""
         self.valid_flag = ""
         self.session = requests.Session()
+        self.host = ""
+        self.port = 0
+        self.key = b""
 
     def prepare_request(self):
         """
@@ -36,8 +39,18 @@ class Session:
         captcha.solve()
 
         self.captcha_value = captcha.get_value()
-        self.flag_value = "FIXME"
-        return self.captcha_value  # temporary, just to test if refactos working
+        print(f"captcha_value: {self.captcha_value}")
+
+        print("sending request to get json")
+        get_json = self.session.post(f"{self.url}/internal-panel", data={"captcha": self.captcha_value})
+
+        data = get_json.json()
+
+        self.flag_value = data.get("flag1", "")
+        self.host = data.get("host", "")
+        self.port = data.get("port", 0)
+        self.key = data.get("key", "").encode()
+        print(self.flag_value, self.host, self.port, self.key)
 
     def submit_request(self):
         """

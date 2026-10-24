@@ -17,8 +17,7 @@ def breach_web(session: Session) -> tuple[str, int, bytes]:
 
     Affiche aussi Flag 1. Indices : requests, PIL, pytesseract.
     """
-    guess = session.prepare_request()
-    print(f"guess: {guess}")
+    session.prepare_request()
 
 
 def breach_network(host: str, port: int, key: bytes) -> str:

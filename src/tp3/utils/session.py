@@ -1,3 +1,5 @@
+import requests
+
 from src.tp3.utils.captcha import Captcha
 
 
@@ -23,17 +25,19 @@ class Session:
         self.captcha_value = ""
         self.flag_value = ""
         self.valid_flag = ""
+        self.session = requests.Session()
 
     def prepare_request(self):
         """
         Prepares the request for sending by capturing and solving the captcha.
         """
-        captcha = Captcha(self.url)
+        captcha = Captcha(self.session, self.url)
         captcha.capture()
         captcha.solve()
 
         self.captcha_value = captcha.get_value()
         self.flag_value = "FIXME"
+        return self.captcha_value  # temporary, just to test if refactos working
 
     def submit_request(self):
         """

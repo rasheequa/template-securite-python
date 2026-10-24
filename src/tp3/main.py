@@ -8,8 +8,10 @@ chronométré). Voir tp3-breach-the-target.md.
 
 import argparse
 import re
+from io import BytesIO
 
 import requests
+from PIL import Image
 
 from tp3.utils.config import logger
 
@@ -24,9 +26,9 @@ def breach_web(target: str) -> tuple[str, int, bytes]:
     print(req.text)
 
     img = re.search(r'<img src="([^"]*)"', req.text).group(1)
-    print(img)
-
-    raise NotImplementedError
+    print(f"img: {img}")
+    req_img = requests.get(f"{target}{img}").content
+    Image.open(BytesIO(req_img)).convert("L").save("captcha.png")
 
 
 def breach_network(host: str, port: int, key: bytes) -> str:

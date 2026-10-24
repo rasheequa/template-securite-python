@@ -16,7 +16,9 @@ class Captcha:
         """
         Fonction permettant la résolution du captcha.
         """
-        self.value = pytesseract.image_to_string(self.image).strip()
+        self.value = pytesseract.image_to_string(
+            self.image, config="--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        ).strip()
 
     def capture(self):
         """

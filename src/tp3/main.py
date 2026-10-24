@@ -7,6 +7,9 @@ chronométré). Voir tp3-breach-the-target.md.
 """
 
 import argparse
+import re
+
+import requests
 
 from tp3.utils.config import logger
 
@@ -16,6 +19,13 @@ def breach_web(target: str) -> tuple[str, int, bytes]:
 
     Affiche aussi Flag 1. Indices : requests, PIL, pytesseract.
     """
+    req = requests.get(f"{target}/internal-panel")
+
+    print(req.text)
+
+    img = re.search(r'<img src="([^"]*)"', req.text).group(1)
+    print(img)
+
     raise NotImplementedError
 
 

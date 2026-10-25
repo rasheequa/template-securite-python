@@ -41,16 +41,21 @@ class Session:
         Prepares the request for sending by capturing and solving the captcha.
         """
         captcha = Captcha(self.session, self.url)
-        captcha.capture()
-        captcha.solve()
+        for i in range(5):
+            logger.debug(f"Attempt {i + 1} to capture and solve captcha")
+            captcha.capture()
+            captcha.solve()
+            self.captcha_value = captcha.get_value()
+            logger.debug(f"captcha_value: {self.captcha_value}")
 
-        self.captcha_value = captcha.get_value()
-        logger.debug(f"captcha_value: {self.captcha_value}")
-
-        logger.debug("sending request to get json")
-        get_json = self.session.post(f"{self.url}/internal-panel", data={"captcha": self.captcha_value})
-
-        data = get_json.json()
+            logger.debug("sending request to get json")
+            get_json = self.session.post(f"{self.url}/internal-panel", data={"captcha": self.captcha_value})
+            data = get_json.json()
+            if data.get("host"):
+                break
+        else:
+            logger.error("Failed to get valid response after 5 attempts")
+            raise RuntimeError("Failed to get valid response after 5 attempts")
 
         self.flag_value = data.get("flag1", "")
         self.host = data.get("host", "")

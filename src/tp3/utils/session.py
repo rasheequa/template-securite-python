@@ -66,19 +66,48 @@ class Session:
         target = remote(self.host, self.port)
         target.recvuntil(b"token.\n")
         logger.debug("reading whats in tcp connection: ")
+
         b64token = target.recvline(drop=True).decode()
         token = base64.b64decode(b64token)
         logger.debug(f"token: {token}")
         self.tokenToXor = token
+        keyToSend = self._process_response()
+        logger.debug(f"senf key to serv: {keyToSend}")
+        target.send(keyToSend.encode())
+        response = target.recvline(drop=True).decode()
+        logger.info(f"response: {response}")
 
-    def process_response(self):
+        b64token = response
+        token = base64.b64decode(b64token)
+        logger.debug(f"token: {token}")
+        self.tokenToXor = token
+        keyToSend = self._process_response()
+        logger.debug(f"senf key to serv: {keyToSend}")
+        target.send(keyToSend.encode())
+        response = target.recvline(drop=True).decode()
+        logger.info(f"response: {response}")
+
+        b64token = response
+        token = base64.b64decode(b64token)
+        logger.debug(f"token: {token}")
+        self.tokenToXor = token
+        keyToSend = self._process_response()
+        logger.debug(f"senf key to serv: {keyToSend}")
+        target.send(keyToSend.encode())
+        response = target.recvline(drop=True).decode().removeprefix("OK ")
+        logger.info(f"response: {response}")
+
+        self.valid_flag = response
+
+    def _process_response(self):
         """
         Processes the response.
         """
         logger.debug(f"xoring token: {self.tokenToXor} with key: {self.key}")
         xor_result = bytes(a ^ b for a, b in zip(self.tokenToXor, cycle(self.key)))
-        self.valid_flag = xor_result.decode()
-        logger.debug(f"valid_flag: {self.valid_flag}")
+        xored = xor_result.decode()
+        logger.debug(f"xored value: {xored}")
+        return xored
 
     def get_flag(self):
         """

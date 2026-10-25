@@ -1,3 +1,5 @@
+import base64
+
 import requests
 from pwn import remote
 
@@ -61,7 +63,9 @@ class Session:
         target = remote(self.host, self.port)
         target.recvuntil(b"token.\n")
         logger.info("reading whats in tcp connection: ")
-        print(target.recvline())
+        b64token = target.recvline(drop=True).decode()
+        token = base64.b64decode(b64token)
+        logger.info(f"token: {token}")
 
     def process_response(self):
         """

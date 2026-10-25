@@ -33,6 +33,7 @@ class Session:
         self.host = ""
         self.port = 0
         self.key = b""
+        self.tokenToXor = b""
 
     def prepare_request(self):
         """
@@ -54,6 +55,7 @@ class Session:
         self.host = data.get("host", "")
         self.port = data.get("port", 0)
         self.key = data.get("key", "").encode()
+        logger.info(f"key: {self.key}")
         return self.flag_value
 
     def submit_request(self):
@@ -66,11 +68,16 @@ class Session:
         b64token = target.recvline(drop=True).decode()
         token = base64.b64decode(b64token)
         logger.info(f"token: {token}")
+        self.tokenToXor = token
 
     def process_response(self):
         """
         Processes the response.
         """
+        logger.info(f"xoring token: {self.tokenToXor} with key: {self.key}")
+        xor_result = bytes(a ^ b for a, b in zip(self.tokenToXor, self.key))
+        self.valid_flag = xor_result.decode()
+        logger.info(f"valid_flag: {self.valid_flag}")
 
     def get_flag(self):
         """

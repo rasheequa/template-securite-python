@@ -1,6 +1,8 @@
 import requests
+from pwn import remote
 
 from src.tp3.utils.captcha import Captcha
+from tp3.utils.config import logger
 
 
 class Session:
@@ -50,12 +52,16 @@ class Session:
         self.host = data.get("host", "")
         self.port = data.get("port", 0)
         self.key = data.get("key", "").encode()
-        return self.flag_value, self.host, self.port, self.key
+        return self.flag_value
 
     def submit_request(self):
         """
         Sends the flag and captcha.
         """
+        target = remote(self.host, self.port)
+        target.recvuntil(b"token.\n")
+        logger.info("reading whats in tcp connection: ")
+        print(target.recvline())
 
     def process_response(self):
         """

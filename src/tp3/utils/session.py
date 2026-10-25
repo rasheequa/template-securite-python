@@ -45,9 +45,9 @@ class Session:
         captcha.solve()
 
         self.captcha_value = captcha.get_value()
-        print(f"captcha_value: {self.captcha_value}")
+        logger.debug(f"captcha_value: {self.captcha_value}")
 
-        print("sending request to get json")
+        logger.debug("sending request to get json")
         get_json = self.session.post(f"{self.url}/internal-panel", data={"captcha": self.captcha_value})
 
         data = get_json.json()
@@ -56,7 +56,7 @@ class Session:
         self.host = data.get("host", "")
         self.port = data.get("port", 0)
         self.key = bytes.fromhex(data.get("key", ""))
-        logger.info(f"key: {self.key}")
+        logger.debug(f"key: {self.key}")
         return self.flag_value
 
     def submit_request(self):
@@ -65,20 +65,20 @@ class Session:
         """
         target = remote(self.host, self.port)
         target.recvuntil(b"token.\n")
-        logger.info("reading whats in tcp connection: ")
+        logger.debug("reading whats in tcp connection: ")
         b64token = target.recvline(drop=True).decode()
         token = base64.b64decode(b64token)
-        logger.info(f"token: {token}")
+        logger.debug(f"token: {token}")
         self.tokenToXor = token
 
     def process_response(self):
         """
         Processes the response.
         """
-        logger.info(f"xoring token: {self.tokenToXor} with key: {self.key}")
+        logger.debug(f"xoring token: {self.tokenToXor} with key: {self.key}")
         xor_result = bytes(a ^ b for a, b in zip(self.tokenToXor, cycle(self.key)))
         self.valid_flag = xor_result.decode()
-        logger.info(f"valid_flag: {self.valid_flag}")
+        logger.debug(f"valid_flag: {self.valid_flag}")
 
     def get_flag(self):
         """

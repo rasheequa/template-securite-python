@@ -28,6 +28,7 @@ def breach_network(session: Session) -> str:
     """
     logger.info("Starting network breach")
     session.submit_request()
+    session.process_response()
     return session.get_flag()
 
 

@@ -12,22 +12,23 @@ from tp3.utils.config import logger
 from tp3.utils.session import Session
 
 
-def breach_web(session: Session) -> tuple[str, int, bytes]:
+def breach_web(session: Session) -> str:
     """Fuzz les endpoints, casse le CAPTCHA, retourne (host, port, key).
 
     Affiche aussi Flag 1. Indices : requests, PIL, pytesseract.
     """
-    flag1, host, port, key = session.prepare_request()
+    flag1 = session.prepare_request()
     logger.info(f"FLAG_1: {flag1}")
-    return host, port, key
 
 
-def breach_network(host: str, port: int, key: bytes) -> str:
+def breach_network(session: Session) -> str:
     """pwntools/socket : décode le flux base64+XOR en boucle sous 30 s.
 
     Retourne le flag final. Indices : pwn.remote, base64.
     """
-    raise NotImplementedError
+    logger.info("Starting network breach")
+    session.submit_request()
+    return session.get_flag()
 
 
 def main() -> None:
@@ -37,8 +38,8 @@ def main() -> None:
 
     logger.info("Starting TP3 - breach the target")
     session = Session(args.target)
-    host, port, key = breach_web(session)
-    flag = breach_network(host, port, key)
+    breach_web(session)
+    flag = breach_network(session)
     logger.info(f"FLAG_FINAL: {flag}")
 
 

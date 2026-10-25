@@ -75,7 +75,7 @@ class Session:
         logger.debug(f"senf key to serv: {keyToSend}")
         target.send(keyToSend.encode())
         response = target.recvline(drop=True).decode()
-        logger.info(f"response: {response}")
+        logger.debug(f"response: {response}")
 
         b64token = response
         token = base64.b64decode(b64token)
@@ -85,7 +85,7 @@ class Session:
         logger.debug(f"senf key to serv: {keyToSend}")
         target.send(keyToSend.encode())
         response = target.recvline(drop=True).decode()
-        logger.info(f"response: {response}")
+        logger.debug(f"response: {response}")
 
         b64token = response
         token = base64.b64decode(b64token)
@@ -95,7 +95,7 @@ class Session:
         logger.debug(f"senf key to serv: {keyToSend}")
         target.send(keyToSend.encode())
         response = target.recvline(drop=True).decode().removeprefix("OK ")
-        logger.info(f"response: {response}")
+        logger.debug(f"response: {response}")
 
         self.valid_flag = response
 

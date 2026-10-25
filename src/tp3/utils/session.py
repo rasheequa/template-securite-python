@@ -1,4 +1,5 @@
 import base64
+from itertools import cycle
 
 import requests
 from pwn import remote
@@ -54,7 +55,7 @@ class Session:
         self.flag_value = data.get("flag1", "")
         self.host = data.get("host", "")
         self.port = data.get("port", 0)
-        self.key = data.get("key", "").encode()
+        self.key = bytes.fromhex(data.get("key", ""))
         logger.info(f"key: {self.key}")
         return self.flag_value
 
@@ -75,7 +76,7 @@ class Session:
         Processes the response.
         """
         logger.info(f"xoring token: {self.tokenToXor} with key: {self.key}")
-        xor_result = bytes(a ^ b for a, b in zip(self.tokenToXor, self.key))
+        xor_result = bytes(a ^ b for a, b in zip(self.tokenToXor, cycle(self.key)))
         self.valid_flag = xor_result.decode()
         logger.info(f"valid_flag: {self.valid_flag}")
 

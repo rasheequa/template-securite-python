@@ -26,7 +26,7 @@ def breach_network(session: Session) -> str:
 
     Retourne le flag final. Indices : pwn.remote, base64.
     """
-    logger.info("Starting network breach")
+    logger.debug("Starting network breach")
     session.submit_request()
     session.process_response()
     return session.get_flag()

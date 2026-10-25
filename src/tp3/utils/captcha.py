@@ -4,6 +4,8 @@ from io import BytesIO
 import pytesseract
 from PIL import Image
 
+from src.tp3.utils.config import logger
+
 
 class Captcha:
     def __init__(self, session, url):
@@ -27,10 +29,10 @@ class Captcha:
 
         req = self.session.get(f"{self.url}/internal-panel")
 
-        print(req.text)
+        logger.debug(req.text)
 
         img = re.search(r'<img src="([^"]*)"', req.text).group(1)
-        print(f"img: {img}")
+        logger.debug(f"img: {img}")
         req_img = self.session.get(f"{self.url}{img}").content
         self.image = Image.open(BytesIO(req_img)).convert("L")
 

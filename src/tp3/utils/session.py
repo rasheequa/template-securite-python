@@ -71,38 +71,19 @@ class Session:
         target = remote(self.host, self.port)
         target.recvuntil(b"token.\n")
         logger.debug("reading whats in tcp connection: ")
-
-        b64token = target.recvline(drop=True).decode()
-        token = base64.b64decode(b64token)
-        logger.debug(f"token: {token}")
-        self.tokenToXor = token
-        keyToSend = self._process_response()
-        logger.debug(f"senf key to serv: {keyToSend}")
-        target.send(keyToSend.encode())
         response = target.recvline(drop=True).decode()
-        logger.debug(f"response: {response}")
 
-        b64token = response
-        token = base64.b64decode(b64token)
-        logger.debug(f"token: {token}")
-        self.tokenToXor = token
-        keyToSend = self._process_response()
-        logger.debug(f"senf key to serv: {keyToSend}")
-        target.send(keyToSend.encode())
-        response = target.recvline(drop=True).decode()
-        logger.debug(f"response: {response}")
+        while not response.startswith("OK "):
+            token = base64.b64decode(response)
+            logger.debug(f"token: {token}")
+            self.tokenToXor = token
+            keyToSend = self._process_response()
+            logger.debug(f"senf key to serv: {keyToSend}")
+            target.send(keyToSend.encode())
+            response = target.recvline(drop=True).decode()
+            logger.debug(f"response: {response}")
 
-        b64token = response
-        token = base64.b64decode(b64token)
-        logger.debug(f"token: {token}")
-        self.tokenToXor = token
-        keyToSend = self._process_response()
-        logger.debug(f"senf key to serv: {keyToSend}")
-        target.send(keyToSend.encode())
-        response = target.recvline(drop=True).decode().removeprefix("OK ")
-        logger.debug(f"response: {response}")
-
-        self.valid_flag = response
+        self.valid_flag = response.removeprefix("OK ")
 
     def _process_response(self):
         """

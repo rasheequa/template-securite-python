@@ -45,6 +45,10 @@ def test_generate_json(tmp_path, result):
         {"llm_summary": 42},
         {"llm_summary": "arrow → emoji \U0001f600 accent é"},
         {"llm_summary": "A" * 400},
+        dict(FULL_RESULT, imports=[f"api_{i}" for i in range(200)]),
+        dict(FULL_RESULT, iocs=None),
+        dict(FULL_RESULT, iocs={"domains": ["x" * 300] * 5, "ips": "1.2.3.4", "mutex": None}),
+        dict(FULL_RESULT, iocs={"registry": ["\u00e9\u2192\U0001f600"]}, mitre_attack=None, flag=None),
     ],
     ids=[
         "full",
@@ -55,6 +59,10 @@ def test_generate_json(tmp_path, result):
         "summary_number",
         "summary_unicode",
         "summary_long_word",
+        "many_imports",
+        "no_iocs",
+        "odd_ioc_values",
+        "unicode_ioc_and_missing_fields",
     ],
 )
 def test_generate_pdf(tmp_path, result):

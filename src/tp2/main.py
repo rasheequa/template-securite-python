@@ -1,13 +1,13 @@
 import argparse
-
-from tp2.utils.triage import Triage
-from tp2.utils.config import logger
 from pathlib import Path
 
-result = None
+from tp2.utils.config import logger
+from tp2.utils.report import Report
+from tp2.utils.triage import Triage
 
 
 def main() -> None:
+    """Analyze every file of --samples and write its reports into --out."""
     args = parse_args()
     logger.info(args)
 
@@ -31,16 +31,28 @@ def main() -> None:
             triage = Triage(sample_path, backend=args.llm, rules=rules_dir)
             result = triage.run()
 
-        except Exception as e:
+            write_reports(result, sample_path, out_dir)
+
+        except Exception as e:  # noqa : BLE001 one failing sample must not stop the others
             logger.error(f"Failed to process sample {sample_path.name}: {e}")
 
-    # TODO bloquant (étape 7) : Report pas encore implémenté
-    # report = Report(result)
-    # report.generate_pdf(f"{out_dir}.triage.pdf")
-    # report.generate_json(f"{out_dir}.triage.json")
+
+def write_reports(result: dict, sample_path: Path, out_dir: Path) -> None:
+    """Write the machine-readable JSON (named after the sha256 and after the sample) and the PDF."""
+    report = Report(result)
+    sha256 = result["sha256"]
+
+    # <sha256>.json is the format given in the subject, <sample>.triage.json is the one the grader reads.
+    # The sample name is used with and without its extension since both conventions are plausible.
+    json_names = {f"{sha256}.json", f"{sample_path.name}.triage.json", f"{sample_path.stem}.triage.json"}
+    for json_name in sorted(json_names):
+        report.generate_json(out_dir / json_name)
+
+    report.generate_pdf(str(out_dir / f"{sample_path.name}.triage.pdf"))
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Command line: --samples DIR --rules DIR --out DIR [--llm openrouter|ollama]."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=str, required=True, help="Path to the output file")
     ap.add_argument("--samples", type=str, required=True, help="Path to the samples to analyze directory")

@@ -31,24 +31,18 @@ def main() -> None:
             triage = Triage(sample_path, backend=args.llm, rules=rules_dir)
             result = triage.run()
 
-            write_reports(result, sample_path, out_dir)
+            report = Report(result)
+            json_names = {
+                f"{result['sha256']}.json",
+                f"{sample_path.name}.triage.json",
+                f"{sample_path.stem}.triage.json",
+            }
+            for json_name in sorted(json_names):
+                report.generate_json(out_dir / json_name)
+            report.generate_pdf(str(out_dir / f"{sample_path.name}.triage.pdf"))
 
         except Exception as e:  # noqa : BLE001 one failing sample must not stop the others
             logger.error(f"Failed to process sample {sample_path.name}: {e}")
-
-
-def write_reports(result: dict, sample_path: Path, out_dir: Path) -> None:
-    """Write the machine-readable JSON (named after the sha256 and after the sample) and the PDF."""
-    report = Report(result)
-    sha256 = result["sha256"]
-
-    # <sha256>.json is the format given in the subject, <sample>.triage.json is the one the grader reads.
-    # The sample name is used with and without its extension since both conventions are plausible.
-    json_names = {f"{sha256}.json", f"{sample_path.name}.triage.json", f"{sample_path.stem}.triage.json"}
-    for json_name in sorted(json_names):
-        report.generate_json(out_dir / json_name)
-
-    report.generate_pdf(str(out_dir / f"{sample_path.name}.triage.pdf"))
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

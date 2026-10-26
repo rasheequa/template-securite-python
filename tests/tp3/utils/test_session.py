@@ -35,13 +35,15 @@ def test_submit_request():
 def test_process_response():
     # Given
     session = Session("http://example.com/captcha")
+    session.tokenToXor = b"\x9d)_\x1b\xc9!\t\x1a\x9d \x0fD\x9e{^\x1a"
+    session.key = b'\xff\x19;"'
 
     # When
-    result = session.process_response()
+    result = session._process_response()
 
     # Then
     # This is a minimal test since the method doesn't do anything yet
-    assert result is None
+    assert result == "b0d96828b94fabe8"
 
 
 def test_get_flag():

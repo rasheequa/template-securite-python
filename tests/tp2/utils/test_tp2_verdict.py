@@ -1,6 +1,8 @@
 import pytest
 
-from src.tp2.utils.verdict import guess_family, mitre_techniques
+from src.tp2.utils.verdict import compute_score, guess_family, mitre_techniques
+
+ALL_IOCS = {"ips": ["185.10.20.30"], "mutex": ["Global\\abc"], "registry": ["HKCU\\Run\\svc"]}
 
 
 @pytest.mark.parametrize(
@@ -71,3 +73,47 @@ def test_mitre_techniques(yara_rules, imports, expected):
     techniques = mitre_techniques(yara_rules, imports)
 
     assert techniques == expected
+
+
+@pytest.mark.parametrize(
+    "yara_rules, iocs, imports, entropy, expected",
+    [
+        ([], {}, [], 0.0, 0),
+        (["Has_Mutex"], {}, [], 0.0, 1),
+        (["A", "B", "C", "D", "E", "F"], {}, [], 0.0, 4),
+        ([], {"ips": ["185.10.20.30"]}, [], 0.0, 2),
+        ([], {"mutex": ["Global\\abc"]}, [], 0.0, 1),
+        ([], {"registry": ["HKCU\\Run\\svc"]}, [], 0.0, 1),
+        ([], {}, ["URLDownloadToFileA"], 0.0, 2),
+        ([], {}, ["malloc", "free"], 0.0, 0),
+        ([], {}, [], 7.5, 1),
+        ([], {}, [], 7.0, 0),
+        (["A", "B", "C"], ALL_IOCS, ["CreateProcessA"], 4.8, 7),
+        (["A", "B", "C", "D"], ALL_IOCS, ["URLDownloadToFileA"], 7.9, 10),
+        (["A"] * 20, ALL_IOCS, ["WSASocketA"], 8.0, 10),
+        ([], {"urls": ["http://c2.example.test/gate.php"]}, [], 0.0, 0),
+    ],
+    ids=[
+        "no_signal",
+        "one_rule",
+        "rules_capped",
+        "ip_only",
+        "mutex_only",
+        "registry_only",
+        "suspicious_import",
+        "harmless_imports",
+        "high_entropy",
+        "entropy_at_threshold",
+        "sample_like_without_known_api",
+        "all_signals_capped_at_ten",
+        "far_above_ten_stays_ten",
+        "urls_alone_are_not_counted",
+    ],
+)
+def test_compute_score(yara_rules, iocs, imports, entropy, expected):
+
+    score = compute_score(yara_rules, iocs, imports, entropy)
+
+    assert score == expected
+    assert isinstance(score, int)
+    assert 0 <= score <= 10

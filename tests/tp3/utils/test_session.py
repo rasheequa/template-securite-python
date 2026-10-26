@@ -49,10 +49,10 @@ def test_process_response():
 def test_get_flag():
     # Given
     session = Session("http://example.com/captcha")
-    session.valid_flag = "FLAG123"
+    session.valid_flag = "ESGI{chain_dev-local-flag}"
 
     # When
     result = session.get_flag()
 
     # Then
-    assert result == "FLAG123"
+    assert result == "ESGI{chain_dev-local-flag}"

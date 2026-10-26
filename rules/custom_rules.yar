@@ -49,3 +49,14 @@ rule Network_Backdoor {
     condition:
         all of them
 }
+
+rule Suspicious_Downloader {
+    meta:
+        description = "Detects a suspicious download (urlmon.dll / URLDownloadToFile)"
+        author = "Rasheequa"
+    strings:
+        $a = "urlmon.dll" nocase
+        $b = "URLDownloadToFile" nocase
+    condition:
+        any of them
+}

@@ -60,6 +60,43 @@ def test_process_response():
     assert result == "b0d96828b94fabe8"
 
 
+# Need to fake captha to test prepare_request
+class FakeCaptcha:
+    def __init__(self, session, url):
+        pass
+
+    def capture(self):
+        pass
+
+    def solve(self):
+        pass
+
+    def get_value(self):
+        return "ABC12"
+
+
+def test_prepare_request(monkeypatch):
+    # Given
+    monkeypatch.setattr("src.tp3.utils.session.Captcha", FakeCaptcha)
+    session = Session("http://example.com/captcha")
+    session.session = MagicMock()
+    session.session.post.return_value.json.return_value = {
+        "flag1": "ESGI{web_dev-local-flag}",
+        "host": "127.0.0.1",
+        "port": 9090,
+        "key": "ff193b22",
+    }
+
+    # When
+    result = session.prepare_request()
+
+    # Then
+    assert result == "ESGI{web_dev-local-flag}"
+    assert session.host == "127.0.0.1"
+    assert session.port == 9090
+    assert session.key == bytes.fromhex("ff193b22")
+
+
 def test_get_flag():
     # Given
     session = Session("http://example.com/captcha")

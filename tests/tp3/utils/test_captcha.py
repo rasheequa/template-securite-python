@@ -1,6 +1,15 @@
+import io
 from unittest.mock import MagicMock
 
+from PIL import Image as PILImage
+
 from src.tp3.utils.captcha import Captcha
+
+
+def _png_bytes():
+    buf = io.BytesIO()
+    PILImage.new("RGB", (4, 4), "white").save(buf, format="PNG")
+    return buf.getvalue()
 
 
 def test_captcha_init():
@@ -30,6 +39,22 @@ def test_solve(monkeypatch):
 
     # Then
     assert captcha.get_value() == "ABC12"
+
+
+def test_capture():
+    # Given
+    session = MagicMock()
+    page = MagicMock(text='<img src="/captcha.png" alt="captcha">')
+    image = MagicMock(content=_png_bytes())
+    session.get.side_effect = [page, image]
+    captcha = Captcha(session, "http://example.com")
+
+    # When
+    captcha.capture()
+
+    # Then
+    assert captcha.image.mode == "L"
+    session.get.assert_any_call("http://example.com/captcha.png")
 
 
 def test_get_value():

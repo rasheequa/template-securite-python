@@ -93,3 +93,27 @@ def compute_score(yara_rules, iocs, imports, entropy):
         score += POINTS_HIGH_ENTROPY
 
     return int(max(0, min(10, score)))
+
+
+def build_summary(family, techniques, score, yara_rules, iocs):
+    """Readable summary built only from our own results (never copies free text found in the file)."""
+    parts = []
+
+    if family != "unknown":
+        parts.append(f"{family} (score {score}/10).")
+    else:
+        parts.append(f"No known family identified (score {score}/10).")
+
+    if yara_rules:
+        parts.append(f"{len(yara_rules)} YARA rule(s) matched: {', '.join(yara_rules)}.")
+
+    if techniques:
+        parts.append(f"MITRE ATT&CK : {', '.join(techniques)}.")
+
+    ips = iocs.get("ips", [])
+    mutex_count = len(iocs.get("mutex", []))
+    registry_count = len(iocs.get("registry", []))
+    ip_text = f"{len(ips)} IP ({', '.join(ips)})" if ips else "0 IP"
+    parts.append(f"IOCs: {ip_text}, {mutex_count} mutex, {registry_count} registry key.")
+
+    return " ".join(parts)

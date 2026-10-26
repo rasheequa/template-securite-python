@@ -7,6 +7,7 @@ from tp2.utils.config import logger
 
 class YaraScanner:
     def __init__(self, rules_path: Path = Path("rules")) -> None:
+        """Compile every .yar file of the folder once (rules stay None if nothing can be compiled)."""
         self.rules_path = rules_path
         self.rules = None
 
@@ -37,4 +38,3 @@ class YaraScanner:
             resultat.append(r.rule)
 
         return resultat
-        # raise NotImplementedError

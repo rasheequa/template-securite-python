@@ -13,6 +13,11 @@ def test_session_init():
     assert session.captcha_value == ""
     assert session.flag_value == ""
     assert session.valid_flag == ""
+    assert session.session is not None
+    assert session.host == ""
+    assert session.port == 0
+    assert session.key == b""
+    assert session.tokenToXor == b""
 
 
 def test_submit_request():

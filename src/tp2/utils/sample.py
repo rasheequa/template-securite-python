@@ -8,9 +8,13 @@ import magic
 
 from tp2.utils.config import logger
 
+# family name, underscore, 16 hex characters: the decoys have "decoy_" in between so they do not match
+FLAG_PATTERN = r"ESGI\{[a-z0-9]+_[0-9a-f]{16}\}"
+
 
 class Sample:
     def __init__(self, path: str) -> None:
+        """Read the whole file in memory (it is never executed)."""
         self.path = path
         with open(path, "rb") as f:
             self.data = f.read()
@@ -28,6 +32,7 @@ class Sample:
         return metadata
 
     def shannon_entropy(self) -> float:
+        """Shannon entropy of the bytes, from 0 to 8 (close to 8: encrypted or packed data)."""
         if not self.data:
             return 0.0
         freq = Counter(self.data)
@@ -51,6 +56,14 @@ class Sample:
             resultat[nom] = re.findall(motif, text)
 
         return resultat
+
+    def extract_flag(self) -> str:
+        """Real flag of the sample (ESGI{family_16hex}); decoys contain "decoy_" so they never match."""
+        text = self.data.decode("latin-1")
+        match = re.search(FLAG_PATTERN, text)
+        if match is None:
+            return ""
+        return match.group(0)
 
     def parse_binary(self) -> dict:
         """imports / sections via lief (si PE/ELF)."""

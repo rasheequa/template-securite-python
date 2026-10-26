@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from src.tp3.utils.captcha import Captcha
 
 
@@ -6,7 +8,7 @@ def test_captcha_init():
     url = "http://example.com/captcha"
 
     # When
-    captcha = Captcha(url)
+    captcha = Captcha(MagicMock(), url)
 
     # Then
     assert captcha.url == url
@@ -14,32 +16,25 @@ def test_captcha_init():
     assert captcha.value == ""
 
 
-def test_solve():
+def test_solve(monkeypatch):
     # Given
-    captcha = Captcha("http://example.com/captcha")
+    monkeypatch.setattr(
+        "src.tp3.utils.captcha.pytesseract.image_to_string",
+        lambda img, config=None: "ABC12\n",
+    )
+    captcha = Captcha(MagicMock(), "http://example.com/captcha")
+    captcha.image = "fake"
 
     # When
     captcha.solve()
 
     # Then
-    assert captcha.value == "FIXME"
-
-
-def test_capture():
-    # Given
-    captcha = Captcha("http://example.com/captcha")
-
-    # When
-    captcha.capture()
-
-    # Then
-    # This is a minimal test since the method doesn't do anything yet
-    assert captcha.image == ""
+    assert captcha.get_value() == "ABC12"
 
 
 def test_get_value():
     # Given
-    captcha = Captcha("http://example.com/captcha")
+    captcha = Captcha(MagicMock(), "http://example.com/captcha")
     captcha.value = "TEST123"
 
     # When

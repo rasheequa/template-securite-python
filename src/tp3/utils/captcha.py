@@ -8,8 +8,9 @@ from src.tp3.utils.config import logger
 
 
 class Captcha:
-    def __init__(self, session, url):
+    def __init__(self, session, url, captcha_url):
         self.url = url
+        self.captcha_url = captcha_url
         self.image = ""
         self.value = ""
         self.session = session
@@ -26,8 +27,8 @@ class Captcha:
         """
         Fonction permettant la capture du captcha.
         """
-
-        req = self.session.get(f"{self.url}/internal-panel")
+        logger.debug(f"Capturing captcha from {self.captcha_url}")
+        req = self.session.get(f"{self.captcha_url}")
 
         logger.debug(req.text)
 

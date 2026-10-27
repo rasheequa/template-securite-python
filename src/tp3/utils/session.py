@@ -27,6 +27,7 @@ class Session:
             url (str): The URL of the captcha.
         """
         self.url = url
+        self.captcha_url = ""
         self.captcha_value = ""
         self.flag_value = ""
         self.valid_flag = ""
@@ -36,11 +37,33 @@ class Session:
         self.key = b""
         self.tokenToXor = b""
 
+    def _fuzz_endpoint(self):
+        """
+        Fuzzes the endpoint to find the correct URL.
+
+        Returns:
+            str: The correct URL.
+        """
+        logger.debug("Fuzzing endpoint")
+        word = "internal-panel"
+        wordlist = map(str.strip, open("wordlist.txt", "r").readlines())
+        for word in wordlist:
+            logger.debug(f"trying {self.url}/{word}")
+            req = self.session.get(f"{self.url}/{word}")
+            if req.status_code == 200 and "captcha" in req.text:
+                logger.debug(f"Word found: {word}")
+                self.captcha_url = f"{self.url}/{word}"
+                break
+        else:
+            logger.debug("Captcha url endpoint not found, continue with default internal-panel")
+            self.captcha_url = f"{self.url}/internal-panel"
+
     def prepare_request(self):
         """
         Prepares the request for sending by capturing and solving the captcha.
         """
-        captcha = Captcha(self.session, self.url)
+        self._fuzz_endpoint()
+        captcha = Captcha(self.session, self.url, self.captcha_url)
         for i in range(5):
             logger.debug(f"Attempt {i + 1} to capture and solve captcha")
             captcha.capture()
@@ -49,7 +72,7 @@ class Session:
             logger.debug(f"captcha_value: {self.captcha_value}")
 
             logger.debug("sending request to get json")
-            get_json = self.session.post(f"{self.url}/internal-panel", data={"captcha": self.captcha_value})
+            get_json = self.session.post(f"{self.captcha_url}", data={"captcha": self.captcha_value})
             data = get_json.json()
             if data.get("host"):
                 break

@@ -1,3 +1,45 @@
+/*
+ * Règles YARA d'exemple pour le TP2.
+ * Ajoutez-en au moins deux à vous.
+ */
+
+rule Suspicious_Downloader
+{
+    meta:
+        author = "esgi"
+        description = "Telechargement + execution d'une charge distante"
+    strings:
+        $dll = "urlmon.dll" nocase
+        $api = "URLDownloadToFile" nocase
+        $run = "WinExec" nocase
+    condition:
+        2 of them
+}
+
+rule Reverse_Shell
+{
+    meta:
+        author = "esgi"
+        description = "Socket sortante + shell de commande"
+    strings:
+        $ws = "WSASocket" nocase
+        $sh = "cmd.exe" nocase
+    condition:
+        $ws and $sh
+}
+
+rule Keylogger
+{
+    meta:
+        author = "esgi"
+        description = "Hook clavier"
+    strings:
+        $hook = "SetWindowsHookEx" nocase
+        $key = "GetAsyncKeyState" nocase
+    condition:
+        any of them
+}
+
 rule Has_Mutex {
     meta:
         description = "Mutex name style : Global\\xxx (prevents double infection)"
@@ -28,16 +70,6 @@ rule C2_Gate_URL {
         $gate
 }
 
-rule Keylogger_APIs {
-    meta:
-        description = "Keyboard capture APIs"
-        author = "Leo"
-    strings:
-        $hook = "SetWindowsHookEx" nocase
-        $key  = "GetAsyncKeyState" nocase
-    condition:
-        any of them
-}
 
 rule Network_Backdoor {
     meta:
@@ -48,15 +80,4 @@ rule Network_Backdoor {
         $cmd  = "cmd.exe" nocase
     condition:
         all of them
-}
-
-rule Suspicious_Downloader {
-    meta:
-        description = "Detects a suspicious download (urlmon.dll / URLDownloadToFile)"
-        author = "Rasheequa"
-    strings:
-        $a = "urlmon.dll" nocase
-        $b = "URLDownloadToFile" nocase
-    condition:
-        any of them
 }

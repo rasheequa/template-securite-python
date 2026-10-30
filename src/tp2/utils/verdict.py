@@ -1,9 +1,9 @@
-FAMILY_BY_RULE = {
+FAMILY_BY_RULE: dict[str, str] = {
     "Suspicious_Downloader": "dropper",
     "Keylogger_APIs": "keylogger",
     "Network_Backdoor": "backdoor",
 }
-FAMILY_BY_IMPORT = {
+FAMILY_BY_IMPORT: dict[str, str] = {
     "URLDownloadToFile": "dropper",
     "InternetOpenUrl": "dropper",
     "SetWindowsHookEx": "keylogger",
@@ -14,7 +14,7 @@ FAMILY_BY_IMPORT = {
     "CryptEncrypt": "ransomware",
 }
 
-MITRE_BY_RULE = {
+MITRE_BY_RULE: dict[str, list[str]] = {
     "Persistence_Run_Key": ["T1547"],
     "C2_Gate_URL": ["T1071"],
     "Suspicious_Downloader": ["T1105"],
@@ -24,7 +24,7 @@ MITRE_BY_RULE = {
 }
 
 
-MITRE_BY_IMPORT = {
+MITRE_BY_IMPORT: dict[str, list[str]] = {
     "URLDownloadToFile": ["T1105"],
     "InternetOpenUrl": ["T1105"],
     "SetWindowsHookEx": ["T1056"],
@@ -45,7 +45,7 @@ POINTS_HIGH_ENTROPY = 1
 HIGH_ENTROPY = 7.0
 
 
-def guess_family(yara_rules, imports):
+def guess_family(yara_rules: list[str], imports: list[str], entropy: float = 0.0) -> str:
     for rule in yara_rules:
         if rule in FAMILY_BY_RULE:
             return FAMILY_BY_RULE[rule]
@@ -55,11 +55,15 @@ def guess_family(yara_rules, imports):
             if morceau in imp:
                 return famille
 
+    # nothing readable identifies it, but the bytes look compressed or encrypted
+    if entropy > HIGH_ENTROPY:
+        return "packed"
+
     return "unknown"
 
 
-def mitre_techniques(yara_rules, imports):
-    codes = set()
+def mitre_techniques(yara_rules: list[str], imports: list[str]) -> list[str]:
+    codes: set[str] = set()
 
     for rule in yara_rules:
         if rule in MITRE_BY_RULE:
@@ -73,11 +77,13 @@ def mitre_techniques(yara_rules, imports):
     return sorted(codes)
 
 
-def _has_suspicious_import(imports):
+def _has_suspicious_import(imports: list[str]) -> bool:
     return any(morceau in imp for imp in imports for morceau in MITRE_BY_IMPORT)
 
 
-def compute_score(yara_rules, iocs, imports, entropy):
+def compute_score(
+    yara_rules: list[str], iocs: dict[str, list[str]], imports: list[str], entropy: float
+) -> int:
     """Suspicion score from 0 to 10, computed only from tool results (never from text found in the file)."""
     score = min(len(yara_rules) * POINTS_PER_RULE, MAX_RULE_POINTS)
 
@@ -95,9 +101,11 @@ def compute_score(yara_rules, iocs, imports, entropy):
     return int(max(0, min(10, score)))
 
 
-def build_summary(family, techniques, score, yara_rules, iocs):
+def build_summary(
+    family: str, techniques: list[str], score: int, yara_rules: list[str], iocs: dict[str, list[str]]
+) -> str:
     """Readable summary built only from our own results (never copies free text found in the file)."""
-    parts = []
+    parts: list[str] = []
 
     if family != "unknown":
         parts.append(f"{family} (score {score}/10).")

@@ -30,11 +30,11 @@ class Triage:
         bininfo = sample.parse_binary()
         imports = bininfo["imports"]
         matches = self.scanner.scan(sample.data)
-        family = guess_family(matches, imports)
+        family = guess_family(matches, imports, meta["entropy"])
         techniques = mitre_techniques(matches, imports)
         score = compute_score(matches, iocs, imports, meta["entropy"])
         summary = build_summary(family, techniques, score, matches, iocs)
-        # TODO llm_triage: verdict = self.llm.triage(summary)
+        # deterministic fallback only: the verdict comes from our tools, never from text found in the file
 
         return {
             **meta,

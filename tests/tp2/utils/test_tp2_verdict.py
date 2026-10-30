@@ -1,13 +1,18 @@
 import pytest
 
 from src.tp2.utils.verdict import (
+    _has_suspicious_import,
     build_summary,
     compute_score,
     guess_family,
     mitre_techniques,
 )
 
-ALL_IOCS = {"ips": ["185.10.20.30"], "mutex": ["Global\\abc"], "registry": ["HKCU\\Run\\svc"]}
+ALL_IOCS = {
+    "ips": ["185.10.20.30"],
+    "mutex": ["Global\\abc"],
+    "registry": ["HKCU\\Run\\svc"],
+}
 
 
 @pytest.mark.parametrize(
@@ -42,8 +47,28 @@ ALL_IOCS = {"ips": ["185.10.20.30"], "mutex": ["Global\\abc"], "registry": ["HKC
     ],
 )
 def test_guess_family(yara_rules, imports, expected):
-
     family = guess_family(yara_rules, imports)
+
+    assert family == expected
+
+
+@pytest.mark.parametrize(
+    "yara_rules, imports, entropy, expected",
+    [
+        ([], [], 7.07, "packed"),
+        ([], [], 7.0, "unknown"),
+        (["Keylogger_APIs"], [], 7.9, "keylogger"),
+        ([], ["CryptEncrypt"], 7.9, "ransomware"),
+    ],
+    ids=[
+        "high_entropy",
+        "threshold_not_packed",
+        "rule_wins_over_entropy",
+        "import_wins_over_entropy",
+    ],
+)
+def test_guess_family_entropy(yara_rules, imports, entropy, expected):
+    family = guess_family(yara_rules, imports, entropy)
 
     assert family == expected
 
@@ -74,7 +99,6 @@ def test_guess_family(yara_rules, imports, expected):
     ],
 )
 def test_mitre_techniques(yara_rules, imports, expected):
-
     techniques = mitre_techniques(yara_rules, imports)
 
     assert techniques == expected
@@ -116,7 +140,6 @@ def test_mitre_techniques(yara_rules, imports, expected):
     ],
 )
 def test_compute_score(yara_rules, iocs, imports, entropy, expected):
-
     score = compute_score(yara_rules, iocs, imports, entropy)
 
     assert score == expected
@@ -148,8 +171,24 @@ EVIL_IOCS = {
         ("dropper", [], 5, [], {}, [], ["YARA"]),
         ("backdoor", ["T1059", "T1095"], 6, [], {}, ["T1059", "T1095"], []),
         ("backdoor", [], 6, [], {}, [], ["MITRE"]),
-        ("dropper", [], 5, [], {"ips": ["1.2.3.4", "5.6.7.8"]}, ["2 IP", "1.2.3.4", "5.6.7.8"], []),
-        ("dropper", [], 5, [], {"mutex": ["a", "b"], "registry": ["c"]}, ["2 mutex", "1 registry"], []),
+        (
+            "dropper",
+            [],
+            5,
+            [],
+            {"ips": ["1.2.3.4", "5.6.7.8"]},
+            ["2 IP", "1.2.3.4", "5.6.7.8"],
+            [],
+        ),
+        (
+            "dropper",
+            [],
+            5,
+            [],
+            {"mutex": ["a", "b"], "registry": ["c"]},
+            ["2 mutex", "1 registry"],
+            [],
+        ),
         (
             "dropper",
             [],
@@ -175,7 +214,6 @@ EVIL_IOCS = {
     ],
 )
 def test_build_summary(family, techniques, score, yara_rules, iocs, expected_in, expected_not_in):
-
     summary = build_summary(family, techniques, score, yara_rules, iocs)
 
     assert isinstance(summary, str)
@@ -184,3 +222,18 @@ def test_build_summary(family, techniques, score, yara_rules, iocs, expected_in,
         assert fragment in summary
     for fragment in expected_not_in:
         assert fragment not in summary
+
+
+@pytest.mark.parametrize(
+    "imports, expected",
+    [
+        ([], False),
+        (["malloc", "free"], False),
+        (["CryptEncrypt"], True),
+        (["malloc", "URLDownloadToFileA"], True),
+        (["SetWindowsHookExW"], True),
+    ],
+    ids=["empty", "harmless_imports", "exact_name", "among_others", "ansi_wide_suffix"],
+)
+def test_has_suspicious_import(imports, expected):
+    assert _has_suspicious_import(imports) is expected

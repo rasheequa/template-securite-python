@@ -25,7 +25,6 @@ FULL_RESULT = {
     ids=["full", "metadata_only", "empty", "unicode"],
 )
 def test_generate_json(tmp_path, result):
-
     file = tmp_path / "test_generate_json.json"
 
     report = Report(result)
@@ -47,8 +46,16 @@ def test_generate_json(tmp_path, result):
         {"llm_summary": "A" * 400},
         dict(FULL_RESULT, imports=[f"api_{i}" for i in range(200)]),
         dict(FULL_RESULT, iocs=None),
-        dict(FULL_RESULT, iocs={"domains": ["x" * 300] * 5, "ips": "1.2.3.4", "mutex": None}),
-        dict(FULL_RESULT, iocs={"registry": ["\u00e9\u2192\U0001f600"]}, mitre_attack=None, flag=None),
+        dict(
+            FULL_RESULT,
+            iocs={"domains": ["x" * 300] * 5, "ips": "1.2.3.4", "mutex": None},
+        ),
+        dict(
+            FULL_RESULT,
+            iocs={"registry": ["\u00e9\u2192\U0001f600"]},
+            mitre_attack=None,
+            flag=None,
+        ),
     ],
     ids=[
         "full",
@@ -66,10 +73,42 @@ def test_generate_json(tmp_path, result):
     ],
 )
 def test_generate_pdf(tmp_path, result):
-
     file = tmp_path / "test_generate_pdf.pdf"
 
     report = Report(result)
     report.generate_pdf(str(file))
 
     assert file.read_bytes()[:5] == b"%PDF-"
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (None, "-"),
+        ("", "-"),
+        ([], "-"),
+        ("text", "text"),
+        (42, "42"),
+        (["a", "b", 3], "a, b, 3"),
+        ({"ips": ["1.2.3.4"], "mutex": []}, "ips : 1.2.3.4\nmutex : -"),
+        ({"iocs": {"ips": None}}, "iocs : ips : -"),
+    ],
+    ids=["none", "empty_string", "empty_list", "string", "number", "list", "dict", "nested_dict"],
+)
+def test_format(value, expected):
+    assert Report._format(value) == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("plain ascii", "plain ascii"),
+        ("accent é à ç", "accent é à ç"),
+        ("arrow →", "arrow ?"),
+        ("emoji \U0001f600", "emoji ?"),
+        ("", ""),
+    ],
+    ids=["ascii", "latin1_accents", "arrow", "emoji", "empty"],
+)
+def test_latin1(text, expected):
+    assert Report._latin1(text) == expected

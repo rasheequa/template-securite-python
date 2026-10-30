@@ -2,83 +2,62 @@ import json
 
 from fpdf import FPDF
 
-MAX_LINES = 30  # per list, so that the report stays readable
-FILE_FIELDS = [
-    ("SHA-256", "sha256"),
-    ("MD5", "md5"),
-    ("Size", "size"),
-    ("Type", "file_type"),
-    ("Entropy", "entropy"),
-]
-
 
 class Report:
+    """Writes the triage result of one sample as a JSON file and a PDF report."""
+
     def __init__(self, result: dict) -> None:
-        """Keep the triage result (the dict following the JSON format of the subject)."""
+        """Keep the result dict returned by Triage.run()."""
         self.result = result
-        self.title = "Malware Triage Report"
-
-    @staticmethod
-    def _clean(value: object) -> str:
-        """Text the PDF font can write (a single unknown character would make fpdf2 fail)."""
-        return str(value).encode("latin-1", "replace").decode("latin-1")
-
-    @staticmethod
-    def _items(values: object) -> list[str]:
-        """Lines for a list of values: at most MAX_LINES of them, or "none" when it is empty."""
-        if not values:
-            return ["none"]
-        values = list(values) if isinstance(values, (list, tuple, set)) else [values]
-        lines = [str(value) for value in values[:MAX_LINES]]
-        if len(values) > MAX_LINES:
-            lines.append(f"... and {len(values) - MAX_LINES} more")
-        return lines
-
-    def _section(self, pdf: FPDF, title: str, lines: list[str]) -> None:
-        """Write a bold title then one line per item (multi_cell wraps the long ones)."""
-        pdf.set_font("helvetica", "B", 12)
-        pdf.cell(0, 9, self._clean(title), new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font("helvetica", "", 10)
-        for line in lines:
-            pdf.multi_cell(w=0, h=5, text=self._clean(line), new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(3)
 
     def generate_pdf(self, out_pdf: str) -> None:
-        """Readable PDF report: the same fields as the JSON of the subject, one section each."""
-        data = self.result
-        iocs = data.get("iocs") or {}
-
+        """Readable PDF report (fpdf2): one bold title per key, its value below."""
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("helvetica", "B", 20)
-        pdf.cell(0, 15, self.title, align="C", new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(5)
 
-        self._section(pdf, "Summary", [data.get("llm_summary") or "No summary available."])
-        self._section(
-            pdf,
-            "Verdict",
-            [
-                f"Family: {data.get('family_guess', 'unknown')}",
-                f"Score: {data.get('score', 0)}/10",
-                f"MITRE ATT&CK: {', '.join(data.get('mitre_attack') or []) or 'none'}",
-                f"Flag: {data.get('flag') or 'none'}",
-            ],
-        )
-        self._section(
-            pdf,
-            "File",
-            [f"{label}: {data.get(key, 'n/a')}" for label, key in FILE_FIELDS],
-        )
-        for kind in ("domains", "ips", "urls", "mutex", "registry"):
-            self._section(pdf, f"IOC - {kind}", self._items(iocs.get(kind)))
-        self._section(pdf, "YARA matches", self._items(data.get("yara_matches")))
-        self._section(pdf, "Imports", self._items(data.get("imports")))
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.cell(0, 10, "Rapport de triage", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(4)
+
+        if not self.result:
+            pdf.set_font("Helvetica", "", 11)
+            pdf.multi_cell(0, 6, "Aucun resultat.")
+
+        for key, value in self.result.items():
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.cell(0, 8, self._latin1(key), new_x="LMARGIN", new_y="NEXT")
+
+            pdf.set_font("Helvetica", "", 11)
+            pdf.multi_cell(0, 6, self._latin1(self._format(value)), new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(2)
 
         pdf.output(out_pdf)
 
     def generate_json(self, out_json: str) -> None:
-        """Fichier JSON lisible."""
+        """Readable JSON file (indented, UTF-8, accents kept as they are)."""
+        with open(out_json, "w", encoding="utf-8") as f:
+            json.dump(self.result, f, indent=2, ensure_ascii=False)
 
-        with open(out_json, "w", encoding="utf-8") as report:
-            json.dump(self.result, report, indent=2, ensure_ascii=False)
+    @staticmethod
+    def _format(value: object) -> str:
+        """Turn a result value into text: dict one line per key, list comma separated, empty as "-"."""
+        if value is None or value == "":
+            return "-"
+
+        if isinstance(value, dict):
+            lignes = []
+            for k, v in value.items():
+                lignes.append(f"{k} : {Report._format(v)}")
+            return "\n".join(lignes)
+
+        if isinstance(value, list):
+            if not value:
+                return "-"
+            return ", ".join(str(v) for v in value)
+
+        return str(value)
+
+    @staticmethod
+    def _latin1(text: str) -> str:
+        """Replace by "?" every character the built-in fpdf2 fonts cannot draw (they only know latin-1)."""
+        return text.encode("latin-1", "replace").decode("latin-1")

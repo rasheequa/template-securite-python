@@ -46,7 +46,6 @@ def _minimal_elf() -> bytes:
     ],
 )
 def test_get_file_metadata(tmp_path, content, key, expected):
-
     file = tmp_path / "test_get_file_metadata.bin"
     file.write_bytes(content)
 
@@ -65,7 +64,6 @@ def test_get_file_metadata(tmp_path, content, key, expected):
     ids=["text", "empty"],
 )
 def test_get_file_metadata_file_type(tmp_path, content, expected):
-
     file = tmp_path / "test_get_file_metadata_file_type.bin"
     file.write_bytes(content)
 
@@ -78,7 +76,11 @@ def test_get_file_metadata_file_type(tmp_path, content, expected):
 @pytest.mark.parametrize(
     "content, key, expected",
     [
-        (b"\x00http://c2.example.test/gate.php\x00", "urls", ["http://c2.example.test/gate.php"]),
+        (
+            b"\x00http://c2.example.test/gate.php\x00",
+            "urls",
+            ["http://c2.example.test/gate.php"],
+        ),
         (b"\x00c2.example.test\x00", "domains", ["c2.example.test"]),
         (b"\x00http://c2.example.test/gate\x00", "domains", ["c2.example.test"]),
         (b"\x00185.10.20.30\x00", "ips", ["185.10.20.30"]),
@@ -105,7 +107,6 @@ def test_get_file_metadata_file_type(tmp_path, content, expected):
     ],
 )
 def test_extract_iocs(tmp_path, content, key, expected):
-
     file = tmp_path / "test_extract_iocs.bin"
     file.write_bytes(content)
 
@@ -121,7 +122,6 @@ def test_extract_iocs(tmp_path, content, key, expected):
     ids=["text", "empty"],
 )
 def test_parse_binary_not_a_binary(tmp_path, content):
-
     file = tmp_path / "test_parse_binary_not_a_binary.bin"
     file.write_bytes(content)
 
@@ -136,14 +136,23 @@ def test_parse_binary_not_a_binary(tmp_path, content):
     [
         (b"", 0, []),
         (b"OVERLAY123", 10, ["OVERLAY123"]),
-        (b"\n--- overlay ---\nWSASocketA\x00connect\x00c2.example.test\x00", 52, ["WSASocketA", "connect"]),
+        (
+            b"\n--- overlay ---\nWSASocketA\x00connect\x00c2.example.test\x00",
+            52,
+            ["WSASocketA", "connect"],
+        ),
         (b"\n--- overlay ---\nws2_32.dll\x00cmd.exe\x00", 36, []),
         (b"\n--- overlay ---\nc2.example.test\x00WinExec\x00", 41, []),
     ],
-    ids=["no_overlay", "no_marker", "imports_before_ioc", "dll_and_exe_ignored", "stops_at_first_ioc"],
+    ids=[
+        "no_overlay",
+        "no_marker",
+        "imports_before_ioc",
+        "dll_and_exe_ignored",
+        "stops_at_first_ioc",
+    ],
 )
 def test_parse_binary_elf(tmp_path, extra, expected_overlay, expected_imports):
-
     file = tmp_path / "test_parse_binary_elf"
     file.write_bytes(_minimal_elf() + extra)
 
@@ -187,7 +196,6 @@ def test_parse_binary_elf(tmp_path, extra, expected_overlay, expected_imports):
     ],
 )
 def test_extract_flag(tmp_path, content, expected):
-
     file = tmp_path / "test_extract_flag.bin"
     file.write_bytes(content)
 
@@ -195,3 +203,23 @@ def test_extract_flag(tmp_path, content, expected):
     flag = sample.extract_flag()
 
     assert flag == expected
+
+
+@pytest.mark.parametrize(
+    "content, expected",
+    [
+        (b"", 0.0),
+        (b"aaaa", 0.0),
+        (b"ab", 1.0),
+        (b"abcd", 2.0),
+        (bytes(range(256)), 8.0),
+    ],
+    ids=["empty", "single_byte_value", "two_values", "four_values", "all_256_values"],
+)
+def test_shannon_entropy(tmp_path, content, expected):
+    file = tmp_path / "test_shannon_entropy.bin"
+    file.write_bytes(content)
+
+    sample = Sample(str(file))
+
+    assert sample.shannon_entropy() == pytest.approx(expected)
